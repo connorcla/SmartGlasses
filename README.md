@@ -1,6 +1,6 @@
-## SmartGlasses
+# SmartGlasses
 
-# How to run speech recognition on raspberry pi
+## How to run speech recognition on raspberry pi
 Have a virtual python environment set up at your root directory.
 Run:
 ````
