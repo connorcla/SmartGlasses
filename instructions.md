@@ -1,3 +1,7 @@
+original personal repo:
+
+https://github.com/catherinetruong/HSV-Color-Detection
+
 if using on venv:
 
 source opencv-env/bin/activate
