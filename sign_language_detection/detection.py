@@ -146,8 +146,8 @@ for epoch in range(num_epochs):
     
     # epoch results
     print(f"Epoch {epoch+1}/{num_epochs} completed")
-    print("Avg training loss: {avg_loss_train:.4f}, Training accuracy: {train_accuracy:.2f}%")
-    #print("Avg validation loss: {avg_loss_validation:.4f}, Validation accuracy: {validation_accuracy:.2f}%\n")
+    print(f"Avg training loss: {avg_loss_train:.4f}, Training accuracy: {train_accuracy:.2f}%")
+    #print(f"Avg validation loss: {avg_loss_validation:.4f}, Validation accuracy: {validation_accuracy:.2f}%\n")
 
     # Save model after each epoch
     torch.save(model.state_dict(), f'mobilenet_asl_epoch{epoch + 1}.pth')
