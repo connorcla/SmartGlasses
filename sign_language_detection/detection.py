@@ -11,6 +11,11 @@ from PIL import Image
 import matplotlib.pyplot as plt
 
 
+import sys 
+sys.path.append("../")
+
+from libraries.menu_tools import *
+
 
 class ASLTestDataset(torch.utils.data.Dataset):
     def __init__(self, root_path, transforms=None):
@@ -89,6 +94,11 @@ test_dataset = torch.utils.data.Subset(test_dataset, indices[:split])
 
 len(train_dataset), len(test_dataset)
 
+def AskUserConfirmation():
+    print("+++++")
+    input("Hit enter to continue...")
+    print("+++++")
+    
 def RunTraining():
     
     training_version = input("Input training version (ex: 1.0.0): ")
@@ -115,25 +125,33 @@ def RunTraining():
     print("\n--------------------\n")
     print()
 
-    print("\n--------------------\n")
-    model = torchvision.models.resnet50(pretrained=True)
 
+    AskUserConfirmation()
+
+
+    print("\n--------------------\n")
+    
+    print("Intializing model...\n")
+    model = torchvision.models.resnet50(pretrained=True)
     for param in model.parameters():
         param.requires_grad = False
 
+    print("Intializing neural network module...\n")
     in_features = model.fc.in_features
     model.fc = torch.nn.Linear(in_features, num_classes)
     model
 
+    print("Initializing loss module")
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-
-
     model.to(device)
     print("\n--------------------\n")
     print()
-
     
+
+    AskUserConfirmation()   
+
+
     print("\n--------------------")
     print("Running epochs...\n")
     for epoch in range(num_epoch):  
@@ -197,27 +215,36 @@ def PlotTraining(device, model, classes):
     plt.show()
     return
 
+# def TestModel():
+    # model = 
 
 
+class DetectionMenu(Menu):
+    def InitExtension(self):
+        self.AddMenuOption("Training")
+        self.AddMenuOption("Plot")
+        self.AddMenuOption("Quit")
         
+
 if __name__ == '__main__':
 
-    user_choice = ""
-    device = model = classes = ""
+    detection_menu: DetectionMenu = DetectionMenu("detection_menu")
 
+    user_choice = device = model = classes = ""
+    
     while (user_choice != "Quit"):
-
-        print("-----\nMenu\n-----")
-        print("1. Training")
-        print("2. Plot\n")
+        
+        detection_menu.PrintMenu()
         user_choice = input("Choice: ")
-
+        
         if (user_choice == "Training"):
-            device, model, clases = RunTraining()
+            device, model, classes = RunTraining()
         elif (user_choice == "Plot"):
             PlotTraining()
-        else:
+        elif (user_choice == "Quit"):
             break
+        else:
+            print("Type a valid menu option\n")
 
 
 
