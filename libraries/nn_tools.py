@@ -132,7 +132,7 @@ class NNDefault():
         self.training_attribute_group_collection.remove(i)
         return
   
-  def GetTrainingAttributeGroup(self, training_attribute_group_name: str) -> NNTransform:
+  def GetTrainingAttributeGroup(self, training_attribute_group_name: str):
     for i in self.training_attribute_group_collection:
       if (i.name == training_attribute_group_name):
         return i
@@ -191,10 +191,11 @@ class NNDefault():
     indices = torch.randperm(train_dataset_size)
     split = int(train_dataset_size * training_attribute_group.test_size)
     train_dataset = torch.utils.data.Subset(train_dataset, indices[split:])
-    train_dataloader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=training_attribute_group.batch_size, shuffle=True, num_workers=0)
+    train_dataloader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=training_attribute_group.batch_size, shuffle=True, num_workers=10)
         
     # Training
     print("\nBeginning training...\n-----------\n")
+    print(f"Reaching for {training_attribute_group.num_epoch} epochs...")
     for epoch in range(training_attribute_group.num_epoch):
       running_loss = 0
       correct_train = 0
@@ -217,6 +218,6 @@ class NNDefault():
 
         running_loss += loss.item()
 
-      print(f"completed epoch {epoch}...")
+      print(f"completed epoch {epoch} with running loss {running_loss}...")
       torch.save(nn_model.model, f'{output_path}{epoch}.pth')
   
