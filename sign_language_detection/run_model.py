@@ -106,11 +106,13 @@ def Predict(model, image_tensor, device):
   return probabilities.cpu().numpy().flatten()
 
 def DetectLabel(array_classes: List[int]):
+  max: float = array_classes[0]
+  max_index: int = 0
   for i in range(len(array_classes)):
-    if i == 1:
-      return i
-  print("Invalid Label Generated")
-  return -1
+    if array_classes[i] > max:
+      max = array_classes[i]
+      max_index = i
+  return max_index
     
     
 if __name__ == "__main__":
@@ -119,9 +121,9 @@ if __name__ == "__main__":
 
   # Make sure model version is correct
   # Unlike training model, we specify the last digit in model version
-  model_ver: str = "1.2/57.pth"
+  model_ver: str = "1.6/2.pth"
   model_path: str = run_model_path_manager.GetLiteralDataPath("model_path") + model_ver
-  input_path: str = run_model_path_manager.GetLiteralDataPath("O")
+  input_path: str = run_model_path_manager.GetLiteralDataPath("g3")
 
   model = torch.load(model_path, weights_only=False)
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
