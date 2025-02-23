@@ -33,7 +33,7 @@ class RunModelPathManager(DataPathManager):
 
 
 transform = transforms.Compose([
-  transforms.Resize(128),
+  # transforms.Resize(128),
   transforms.ToTensor()
 ])
 
@@ -121,7 +121,7 @@ if __name__ == "__main__":
 
   # Make sure model version is correct
   # Unlike training model, we specify the last digit in model version
-  model_ver: str = "1.6/2.pth"
+  model_ver: str = "4.0/2.pth"
   model_path: str = run_model_path_manager.GetLiteralDataPath("model_path") + model_ver
   input_path: str = run_model_path_manager.GetLiteralDataPath("g3")
 
@@ -144,7 +144,7 @@ if __name__ == "__main__":
   print(f"Output for {input_path}: ")
 
   start_time: int = round(time.time() * 1000)
-  input_image = Image.open(input_path)
+  input_image = Image.open(input_path).convert('RGB')
   input_data = transform(input_image)[:3].unsqueeze(0)
 
 
@@ -162,6 +162,7 @@ if __name__ == "__main__":
   
 
   predict = Predict(model, input_data, device)
+  # print(torch.softmax(processed_data, dim=1))
   end_time: int = round(time.time() * 1000)
 
   print(f"Classes Array: {predict}")
