@@ -1,1 +1,7 @@
-datasets/
+sign_language_detection/datasets/
+sign_language_detection/checkpoints/
+sign_language_detection/input-data/
+sign_language_detection/models/
+sign_language_detection/plot_training.py
+
+libraries/__pycache__

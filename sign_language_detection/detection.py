@@ -62,7 +62,8 @@ print("Dataset paths are correct!")
 test_size = 0.2
 batch_size = 32
 num_epoch = 5
-learning_rate = 0.001
+# learning_rate = 0.001
+learning_rate = 0.1
 num_classes = 29
 
 train_transforms = transforms.Compose([

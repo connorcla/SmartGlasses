@@ -23,5 +23,8 @@ sudo apt-get install p7zip-full
 python -m pip install -U pip
 python -m pip install -U matplotlib
 
+# Datasets
+pip install kagglehub
+
 # Get pytorch libraries (Universal?)
 pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
