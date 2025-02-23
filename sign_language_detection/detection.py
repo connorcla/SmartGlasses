@@ -153,7 +153,7 @@ for epoch in range(num_epochs):
     torch.save(model.state_dict(), f'mobilenet_asl_epoch{epoch + 1}.pth')
 
 
-
+"""
 ### final testing on test_dataset
 
 test_dataset = datasets.ImageFolder(test_data_path, transform=validation_transforms)
@@ -175,5 +175,5 @@ for idx, (img, label) in enumerate(test_dataset):
     ax.flat[idx].axis('off')
         
 plt.show()
-
+"""
 
