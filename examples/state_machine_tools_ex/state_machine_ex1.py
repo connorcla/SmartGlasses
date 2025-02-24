@@ -7,9 +7,11 @@ from libraries.state_machine_tools import *
 
 class ButtonStateMachine(StateMachine):
   def InitExtension(self): 
-    self.AddState(InitializeState("initialize_state"))
-    self.AddState(OffState("off_state"))
-    self.AddState(OnState("on_state"))
+    self.AddState(InitializeState("initialize_state", self))
+    self.AddState(OffState("off_state", self))
+    self.AddState(OnState("on_state", self))
+    
+    # Declare state machine variables with "self.[variable_name]"
 
     self.curr_state: State = self.GetState("initialize_state")
 
@@ -43,6 +45,9 @@ class ButtonStateMachine(StateMachine):
 
 class InitializeState(State):
   def InitExtension(self):
+    # Declare extra state variables with "self.[variable_name]"
+    
+    # Add state actions, functions that run when the state machine is called
     self.action_manager.AddAction(self.PrintInitialize)
 
   def PrintInitialize(self):

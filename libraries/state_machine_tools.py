@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, List
 import time 
 
 class Workable:
@@ -103,9 +103,11 @@ class ActionManager(Workable):
 
 class State(Workable):
 
-  def __init__(self, name: str):
+  # The warning is fine
+  def __init__(self, name: str, state_machine):
     self.name: str = name
     self.action_manager = ActionManager()
+    self.state_machine = None
     self.InitExtension()
 
   def InitExtension(self):
@@ -123,13 +125,12 @@ class State(Workable):
   #Override
   def Pause(self):
     self.is_working = False
-    action_manager.Pause()
+    self.action_manager.Pause()
 
   #Override
   def Reset(self):
     self.is_working = False
-    action_manager.Reset()
-
+    self.action_manager.Reset()
 
 
   def Execute(self):
@@ -152,7 +153,7 @@ class StateMachine(Workable):
     self.period_manager = PeriodManager(period_ms)
     self.state_list: List[State] = []
 
-    self.curr_state: State = State("open-state")
+    self.curr_state: State = None
     self.InitExtension()
 
   def InitExtension(self):
@@ -171,14 +172,14 @@ class StateMachine(Workable):
     for state in self.state_list:
       state.Pause()
 
-    period_manager.Pause()
+    self.period_manager.Pause()
     self.is_working = False
 
   def Reset(self): #Override
     for state in self.state_list:
       state.Reset()
 
-    period_manager.Reset()
+    self.period_manager.Reset()
     self.is_working = False
 
 
@@ -192,7 +193,7 @@ class StateMachine(Workable):
   def RemoveState(self, state_name: str):
     for state in self.state_list:
       if state.name == state_name:
-        state_list.remove(i)
+        self.state_list.remove(state)
         return
 
   def GetState(self, state_name: str):
