@@ -7,6 +7,8 @@ from libraries.nn_tools import *
 
 class TrainingDataPathManager(DataPathManager):
   def InitExtension(self):
+    
+    # Must create these paths
     self.AddDataPath("training_path", "./datasets/asl_alphabet/asl_alphabet_train/")
     self.AddDataPath("test_path", "./datasets/asl_alphabet/asl_alphabet_test/")
     self.AddDataPath("model_path", "./models/")
@@ -35,7 +37,7 @@ class NNASL(NNDefault):
     self.AddTrainingAttributeGroup("Default", 0.2, 32, 5, 0.001, 29)
     self.AddTrainingAttributeGroup("Speed", 0.2, 32, 100, 0.01, 29)
     self.AddTrainingAttributeGroup("Accurate", 0.2, 32, 100, 0.001, 29)
-    self.AddTrainingAttributeGroup("Funny", 0.2, 256, 100, 0.1, 29)
+    self.AddTrainingAttributeGroup("Funny", 0.2, 32, 100, 0.0001, 29)
     
     self.AddNNTransformation(NNDefaultTransform("Default"))
     self.AddNNTransformation(NNVariableTransform("Variable"))
@@ -52,18 +54,20 @@ if __name__ == "__main__":
   
   path_manager: TrainingDataPathManager = TrainingDataPathManager("path_manager")
 
-  load_model_option: bool = True                                                   # Want to load an existing model before training?
+  load_model_option: bool = True                                                                 # Want to load an existing model before training?
 
   input_path: str = path_manager.GetLiteralDataPath("training_path")
-  output_path: str = path_manager.GetLiteralDataPath("model_path") + "7.0/"        # Edit last string to be a nonexisting path in "models/"
-  model_path: str = path_manager.GetLiteralDataPath("model_path") + "6.0/53.pth"   # If load_model_option: Edit last string to be an existing path to a .pth
+  output_path: str = path_manager.GetLiteralDataPath("model_path") + "10.0/"                     # Edit last string to be a nonexisting path in "models/"
+  load_existing_model_path: str = path_manager.GetLiteralDataPath("model_path") + "10.0/0.pth"   # If load_model_option: Edit last string to be an existing path to a .pth
 
   nn_asl: NNASL = NNASL("nn_asl")
   if (load_model_option):
-    nn_asl.LoadModel("Default", model_path)                                        # Edit model type if needed
+    nn_asl.LoadModel("Default", load_existing_model_path)                                        # Edit model type if needed: "Default", "Mobile"
     
   timer_start: float = GetCurrentTimeInMin()
-  nn_asl.Train("Experimental3", "Variable", "Default", input_path, output_path)    # Edit training type, transformation type, and model type
+  
+  # Edit training type, transformation type, model type, input path, output path, number of workers, using a previous model
+  nn_asl.Train("Funny", "Variable", "Default", input_path, output_path, 10, load_model_option)       
   timer_end: float = GetCurrentTimeInMin()
 
   print(f"Total minutes: {timer_end-timer_start}")

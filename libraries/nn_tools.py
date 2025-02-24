@@ -102,8 +102,14 @@ class NNModel():
     self.name: str = name
     self.is_mobile: bool = is_mobile
 
-    if (is_mobile):
+    # Loadable attributes
+    self.criterion = torch.nn.CrossEntropyLoss()    
+    self.epoch = 0
+    self.loss = None
+
+    if (not is_mobile):
       self.model = torchvision.models.resnet50(weights=True)
+      self.optimizer = torch.optim.Adam(self.model.parameters())
     else:
       self.model = torchvision.models.mobilenet_v2(pretrained=True)
     
@@ -136,7 +142,6 @@ class NNDefault():
     pass
   
   
-  
   # Model
   def AddNNModel(self, nn_model: NNModel):
     self.nn_model_collection.append(nn_model)
@@ -151,7 +156,6 @@ class NNDefault():
     for i in self.nn_model_collection:
       if (i.name == nn_model_name):
         return i
-  
   
   
   # Training Attribute Groups
@@ -170,7 +174,6 @@ class NNDefault():
         return i
 
 
-
   # NN Transformation
   def AddNNTransformation(self, nn_transformation: NNTransform):
     self.nn_transform_collection.append(nn_transformation)
@@ -187,7 +190,6 @@ class NNDefault():
         return i.GetTransformation()
   
 
-
   # Load
   def LoadModel(self, model_name: str, model_pth_path: str):
 
@@ -195,7 +197,14 @@ class NNDefault():
 
     if (not nn_model.is_mobile):
       # Standard
-      nn_model.model = torch.load(model_pth_path, weights_only=False)
+      model_features = torch.load(model_pth_path, weights_only=False)
+      
+      model_dict = nn_model.model.state_dict()
+      model_dict.update(model_features["model_state_dict"])
+      
+      nn_model.optimizer.load_state_dict(model_features["optimizer_state_dict"])
+      nn_model.epoch = model_features["epoch"]
+      nn_model.loss = model_features["loss"]
     else:
       # Mobile
       nn_model.model = torchvision.models.mobilenet_v2(pretrained=True)
@@ -208,33 +217,42 @@ class NNDefault():
     nn_model.model.to(self.nn_device)
   
   
-  
   # Train Functions
-  
-  def Train(self, training_attribute_group_name: str, nn_transformation_name: str, model_name: str, input_path: str, output_path: str):
+  def Train(self, training_attribute_group_name: str, nn_transformation_name: str, model_name: str, input_path: str, output_path: str, worker_amount: int, loaded_model: bool):
     
+    print("\n----------")
     # Path verification and creation
     if not os.path.exists(input_path):
       raise FileNotFoundError(f"Input path ({input_path}) is not valid. It doesn't exist!")
     else:
       print(f"Input path: {input_path} is valid.")
     
-    if not os.path.exists(output_path):
-      print(f"Creating output path: {output_path}.")
-      os.mkdir("./"+output_path)
+    if not loaded_model:
+      if not os.path.exists(output_path):
+        print(f"Creating output path: {output_path}.")
+        os.mkdir("./"+output_path)
+      else:
+        raise FileNotFoundError(f"Output path ({output_path}) is not valid for a new model. It already exists!")
     else:
-      raise FileNotFoundError(f"Output path ({output_path}) is not valid. It already exists!")
+      print(f"Continuing training on path {output_path} for previous model.")
     
     # Selection from lists
     training_attribute_group = self.GetTrainingAttributeGroup(training_attribute_group_name)
     nn_transformation = self.GetNNTransformation(nn_transformation_name)
 
     # Model Configuration
+    og_epoch = 0
+    pending_uploaded_loss: bool = True
     nn_model = self.GetModel(model_name)
-    nn_model.in_features = nn_model.model.fc.in_features
-    nn_model.model.fc = torch.nn.Linear(nn_model.in_features, training_attribute_group.num_classes)
-    nn_model.criterion = torch.nn.CrossEntropyLoss()
-    nn_model.optimizer = torch.optim.Adam(nn_model.model.parameters(), lr=training_attribute_group.learning_rate)
+    if (not loaded_model):
+      nn_model.in_features = nn_model.model.fc.in_features
+      nn_model.model.fc = torch.nn.Linear(nn_model.in_features, training_attribute_group.num_classes)
+      nn_model.criterion = torch.nn.CrossEntropyLoss()
+      nn_model.optimizer = torch.optim.Adam(nn_model.model.parameters(), lr=training_attribute_group.learning_rate)
+      pending_uploaded_loss = False
+    else:
+      og_epoch = nn_model.epoch
+      
 
     # Seeding and device setting
     torch.manual_seed(1)
@@ -246,12 +264,13 @@ class NNDefault():
     indices = torch.randperm(train_dataset_size)
     split = int(train_dataset_size * training_attribute_group.test_size)
     train_dataset = torch.utils.data.Subset(train_dataset, indices[split:])
-    train_dataloader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=training_attribute_group.batch_size, shuffle=True, num_workers=10)
+    train_dataloader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=training_attribute_group.batch_size, shuffle=True, num_workers=worker_amount)
         
     # Training
     print("\nBeginning training...\n-----------\n")
-    print(f"Reaching for {training_attribute_group.num_epoch} epochs...")
-    for epoch in range(training_attribute_group.num_epoch):
+    print(f"Starting at epoch {og_epoch}...")
+    print(f"Reaching for {training_attribute_group.num_epoch + og_epoch} epochs...")
+    for epoch in range(og_epoch, training_attribute_group.num_epoch + og_epoch):
       running_loss = 0
       correct_train = 0
       total_train = 0
@@ -263,6 +282,8 @@ class NNDefault():
         
         output = nn_model.model(images)
         loss = nn_model.criterion(output, labels)
+        if (pending_uploaded_loss):
+          loss = nn_model.loss
 
         correct_train += (torch.max(output, dim=1)[1] == labels).sum()
         total_train += labels.size(0)
@@ -274,9 +295,16 @@ class NNDefault():
         running_loss += loss.item()
 
       print(f"completed epoch {epoch} with running loss {running_loss}...")
-      torch.save(nn_model.model, f'{output_path}{epoch}.pth')
+      
+      model_data = {
+        "epoch" : epoch + 1,
+        "model_state_dict" : nn_model.model.state_dict(),
+        "optimizer_state_dict" : nn_model.optimizer.state_dict(),
+        "new_dict" : nn_model.model.fc.weight[:, 29],
+        "loss" : loss
+      }
+      torch.save(model_data, f'{output_path}{epoch}.pth')
    
-
 
   # Helper   
   def GetLabel(self, probabilities: List[int]):
@@ -297,7 +325,6 @@ class NNDefault():
       probabilities = torch.nn.functional.softmax(outputs, dim=1)
     return self.GetLabel(probabilities.cpu().numpy().flatten())
     
-
   # Gets label and prints out a bunch of stuff
   def PredictLong(self, model_name: str, image_path: str, enable_layer_ouput: bool, enable_classification_score: bool, enable_probability_array: bool):
 
@@ -332,6 +359,7 @@ class NNDefault():
       print(f"PROBABILITY ARRAY: \n{probabilities}")
 
     return self.GetLabel(probabilities)
+
 
   def RunTestMatching(self, model_name: str, data_set_type: torch.utils.data.Dataset, training_data_path: str, test_data_path: str):
 

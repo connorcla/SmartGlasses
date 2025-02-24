@@ -29,5 +29,5 @@ pip install kagglehub
 # Get pytorch libraries (Universal?)
 pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
 
-# Get mobile pytorch
-pip3 install tqdm 
+# Get mobile pytorch (Don't know if necessary, also just guessed library)
+# pip3 install tqdm 
