@@ -107,7 +107,7 @@ class State(Workable):
   def __init__(self, name: str, state_machine):
     self.name: str = name
     self.action_manager = ActionManager()
-    self.state_machine = None
+    self.state_machine = state_machine
     self.InitExtension()
 
   def InitExtension(self):
@@ -142,6 +142,9 @@ class State(Workable):
 
   def SetStatePeriod(self, period_ms: int):
     self.period_manager.SetPeriod(period_ms)
+    
+  def GetStateMachine(self):
+    return self.state_machine
 
 
 

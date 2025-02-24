@@ -12,9 +12,19 @@ class ButtonStateMachine(StateMachine):
     self.AddState(OnState("on_state", self))
     
     # Declare state machine variables with "self.[variable_name]"
-
+    self.button_statement = "From the state-machine!"
+    
+    # Declaring starting state
     self.curr_state: State = self.GetState("initialize_state")
 
+  # Made a helper function to access state machine variable
+  # Not neccessary, like most python variables you can directly access variable but I find this nicer
+  # Note that python will not be able to detect dynamically created variables and functions so intellisense
+  # won't be that useful these types
+  def GetButtonStatement(self):
+    return self.button_statement
+  
+  # Main execution
   def Execute(self):
     if (self.is_working):
       if (self.period_manager.SatisfiesPeriod()):
@@ -68,6 +78,9 @@ class OnState(State):
   
   def PrintOn(self):
     print("On state!")
+
+    # Notice that intellisense marks the GetButtonStatement() function white, it doesn't exist statically
+    print(self.GetStateMachine().GetButtonStatement())      
 
 
 
