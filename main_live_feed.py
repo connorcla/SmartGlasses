@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import subprocess
 
 def categorize_color(r, g, b):
     if r < 50 and g < 50 and b < 50:
@@ -22,17 +23,51 @@ def categorize_color(r, g, b):
         return "blue"
     else:
         return "unknown"
+        
+def get_color_rgb(r,g,b):
+    hsv = cv2.cvtColor(np.uint8([[[r,g,b]]]), cv2.COLOR_RGB2HSV)[0][0]
+    h,s,v = hsv
+    
+    if s < 50:
+        return "gray"
+    elif v < 50:
+        return "black"
+    elif 0 <= h < 10 or 170 <= h <= 180:
+        return "red"
+    elif 10 <= h < 40:
+        return "orange"
+    elif 40 <= h < 90:
+        return "yellow"
+    elif 90 <= h < 170:
+        return "green"
+    elif 170 <= h < 260:
+        return "blue"
+    elif 260 <= h < 320:
+        return "purple"
+    else:
+        return "unknown"
+        
 
-cap = cv2.VideoCapture(0)
-if not cap.isOpened():
-    print("Error: Could not open camera.")
-    exit()
+def capture_image(filename="captured_image.jpg"):
+    try:
+        subprocess.run(["rpicam-still", "-o", filename], check=True)
+        print("Image captured successfully")
+    except subprocess.CalledProcessError:
+        print("Error: Failed to capture image with rpicam-still.")
+        exit()
+
+#cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+#if not cap.isOpened():
+#    print("Error: Could not open camera.")
+#    exit()
 
 while True:
-    ret, frame = cap.read()
-    if not ret:
-        print("Failed to capture image")
-        break
+    capture_image("captured_image.jpg")
+    frame = cv2.imread("captured_image.jpg")
+    
+    #if not ret:
+    #    print("Failed to capture image")
+    #    break
 
     height, width, _ = frame.shape
     center_x, center_y = width // 2, height // 2
