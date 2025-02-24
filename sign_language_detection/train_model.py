@@ -15,36 +15,33 @@ class TrainingDataPathManager(DataPathManager):
 class NNDefaultTransform(NNTransform):
   def GetTransformation(self):
     transform = transforms.Compose([
+      transforms.Resize(128),
+      transforms.ToTensor()
+    ])
+    return transform
+class NNVariableTransform(NNTransform):
+  def GetTransformation(self):
+    transform = transforms.Compose([
       transforms.RandomRotation(30),
       transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.1),
       transforms.Resize(128),
       transforms.ToTensor()
     ])
     return transform
-  
 
-class NNDefaultModel(NNModel):
-  def InitExtension(self):
-    pass
-   
    
 class NNASL(NNDefault):
   def InitExtension(self):
     self.AddTrainingAttributeGroup("Default", 0.2, 32, 5, 0.001, 29)
-    self.AddTrainingAttributeGroup("Speed", 0.2, 32, 5, 0.1, 29)
-    self.AddTrainingAttributeGroup("Speed2", 0.2, 32, 20, 0.1, 29)
-    self.AddTrainingAttributeGroup("Accurate", 0.2, 32, 10, 0.001, 29)
-    self.AddTrainingAttributeGroup("Accurate2", 0.2, 1000, 100, 0.001, 29)
-    self.AddTrainingAttributeGroup("Accurate3", 0.2, 256, 100, 0.001, 29)
-    self.AddTrainingAttributeGroup("Accurate4", 0.2, 1024, 100, 0.001, 29) # Version 1.6
-    self.AddTrainingAttributeGroup("Accurate5", 0.2, 2048, 1000, 0.001, 29) # Version 1.7
-
-    self.AddTrainingAttributeGroup("Experimental2", 0.2, 512, 100, 0.0001, 29) # Version 3.0
-
-    self.AddTrainingAttributeGroup("Experimental3", 0.2, 32, 100, 0.001, 29) # Version 4.0
+    self.AddTrainingAttributeGroup("Speed", 0.2, 32, 100, 0.01, 29)
+    self.AddTrainingAttributeGroup("Accurate", 0.2, 32, 100, 0.001, 29)
+    self.AddTrainingAttributeGroup("Funny", 0.2, 256, 100, 0.1, 29)
     
     self.AddNNTransformation(NNDefaultTransform("Default"))
-    self.AddNNModel(NNDefaultModel("Default"))
+    self.AddNNTransformation(NNVariableTransform("Variable"))
+
+    self.AddNNModel(NNModel("Default", False))
+    self.AddNNModel(NNModel("Mobile", True))
 
 
 def GetCurrentTimeInMin():
@@ -53,18 +50,22 @@ def GetCurrentTimeInMin():
 
 if __name__ == "__main__":
   
-  training_data_path_manager: TrainingDataPathManager = TrainingDataPathManager("training_data_path_manager")
+  path_manager: TrainingDataPathManager = TrainingDataPathManager("path_manager")
 
-  # Update model version per run
-  model_ver: str = "4.0/"
-  input_path: str = training_data_path_manager.GetLiteralDataPath("training_path")
-  output_path: str = training_data_path_manager.GetLiteralDataPath("model_path") + model_ver
+  load_model_option: bool = True                                                   # Want to load an existing model before training?
+
+  input_path: str = path_manager.GetLiteralDataPath("training_path")
+  output_path: str = path_manager.GetLiteralDataPath("model_path") + "7.0/"        # Edit last string to be a nonexisting path in "models/"
+  model_path: str = path_manager.GetLiteralDataPath("model_path") + "6.0/53.pth"   # If load_model_option: Edit last string to be an existing path to a .pth
 
   nn_asl: NNASL = NNASL("nn_asl")
-
+  if (load_model_option):
+    nn_asl.LoadModel("Default", model_path)                                        # Edit model type if needed
+    
   timer_start: float = GetCurrentTimeInMin()
-  nn_asl.Train("Experimental3", "Default", "Default", input_path, output_path)
+  nn_asl.Train("Experimental3", "Variable", "Default", input_path, output_path)    # Edit training type, transformation type, and model type
   timer_end: float = GetCurrentTimeInMin()
+
   print(f"Total minutes: {timer_end-timer_start}")
   
 
