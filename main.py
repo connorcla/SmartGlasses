@@ -21,7 +21,7 @@ class Glasses_State_Machine(StateMachine):
     def Execute(self):
         if(self.is_working):
             match self.curr_state.name:
-                case "initialize_state":
+                case "init_state":
                     self.curr_state = self.GetState("system_off")
                 case "system_off":
                     if GPIO.input(power_btn):
@@ -200,7 +200,7 @@ if __name__ == "__main__":
     GPIO.setup(mode_btn, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
     
     
-    glasses_sm = Glasses_State_Machine("glasses_state_machine", 1)
+    glasses_sm = Glasses_State_Machine("glasses_state_machine", 10)
     glasses_sm.Start()
     while True:
         glasses_sm.Execute()
