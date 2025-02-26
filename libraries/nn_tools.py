@@ -13,6 +13,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 
 import time
+import random
 
 class DataPath():
   def __init__(self, path_name: str, literal_path: str):
@@ -190,23 +191,67 @@ class NNDefault():
         return i.GetTransformation()
   
 
-  # Load
-  def LoadModel(self, model_name: str, model_pth_path: str):
+  # Model Loading
+  def DefaultModel(self, model_name: str, tag_name: str):
+    nn_model = self.GetModel(model_name)
+    tag = self.GetTrainingAttributeGroup(tag_name)
+    
+    # Manual Configuration
+    nn_model.epoch = 0
+
+    nn_model.in_features = nn_model.model.fc.in_features
+    nn_model.optimizer = torch.optim.Adam(nn_model.model.parameters(), lr=tag.learning_rate)
+    nn_model.model.fc = torch.nn.Linear(nn_model.in_features, tag.num_classes, device=self.nn_device)
+    nn_model.criterion = torch.nn.CrossEntropyLoss()
+    
+    nn_model.model.to(self.nn_device)
+    
+    
+  def LoadModel(self, model_name: str, model_pth_path: str, tag_name: str):
 
     nn_model = self.GetModel(model_name)
+    tag = self.GetTrainingAttributeGroup(tag_name)
+    torch.set_grad_enabled(True)
 
     if (not nn_model.is_mobile):
       # Standard
-      model_features = torch.load(model_pth_path, weights_only=False)
+      model_pull = torch.load(model_pth_path, weights_only=False)
+
+      nn_model.epoch = model_pull["epoch"]
+      nn_model.model = torchvision.models.resnet50(weights=True) # 2048, 1000 default
+      nn_model.model.fc = torch.nn.Linear(2048, tag.num_classes, device=self.nn_device)
+      # print("--Debug--")
+      # print(nn_model.model.fc)
+      # print("------")
+      nn_model.model.load_state_dict(model_pull, strict=False)
       
-      model_dict = nn_model.model.state_dict()
-      model_dict.update(model_features["model_state_dict"])
+      # preload_model_dict = nn_model.model.state_dict()
+      # fc_weights = model_pull["model_state_dict"]["fc.weight"]
+      # fc_weights = fc_weights[:, tag.num_classes]
+      # preload_model_dict.update(fc_weights)
+      # nn_model.model.load_state_dict(preload_model_dict)
+      # nn_model.model.load_state_dict(model_pull["model_state_dict"])
       
-      nn_model.optimizer.load_state_dict(model_features["optimizer_state_dict"])
-      nn_model.epoch = model_features["epoch"]
-      nn_model.loss = model_features["loss"]
+      # nn_model.model.to(self.nn_device)
+      # for name, layer in nn_model.model.named_children():
+      #   layer.to(self.nn_device)
+      
+      # for name, param in nn_model.model.named_parameters():
+      #   param.data = param.data.to(self.nn_device)
+      #   if param.grad != None:
+      #     param.grad = param.gard.to(self.nn_device)
+
+      # nn_model.optimizer = torch.optim.Adam(nn_model.model.parameters(), tag.learning_rate)
+      # nn_model.optimizer.load_state_dict(model_pull["optimizer_state_dict"])
+      # for state in nn_model.optimizer.state.values():
+      #   for k, v in state.items():
+      #     if isinstance(v, torch.Tensor):
+      #       state[k] = v.to(self.nn_device)
+      
+
+
     else:
-      # Mobile
+      # Mobile : Loads model but doesn't allow continous training
       nn_model.model = torchvision.models.mobilenet_v2(pretrained=True)
       in_features = nn_model.model.classifier[1].in_features
       classes = 29
@@ -218,75 +263,175 @@ class NNDefault():
   
   
   # Train Functions
-  def Train(self, training_attribute_group_name: str, nn_transformation_name: str, model_name: str, input_path: str, output_path: str, worker_amount: int, loaded_model: bool):
+  def ValidatePathProcessing(self, input_path: str, output_path: str, loaded_model: bool):
+
+    input_path_exists: bool = os.path.exists(input_path)
+    output_path_exists: bool = os.path.exists(output_path)
     
     print("\n----------")
     # Path verification and creation
-    if not os.path.exists(input_path):
+    if not input_path_exists:
       raise FileNotFoundError(f"Input path ({input_path}) is not valid. It doesn't exist!")
     else:
       print(f"Input path: {input_path} is valid.")
     
     if not loaded_model:
-      if not os.path.exists(output_path):
+      if not output_path_exists:
         print(f"Creating output path: {output_path}.")
         os.mkdir("./"+output_path)
       else:
         raise FileNotFoundError(f"Output path ({output_path}) is not valid for a new model. It already exists!")
     else:
       print(f"Continuing training on path {output_path} for previous model.")
+  
+  def GetPathProcessing(self, input_path: str, output_path: str, loaded_model: bool):
+    print_list: List[str] = []
+    input_path_exists: bool = os.path.exists(input_path)
+    output_path_exists: bool = os.path.exists(output_path)
+    
+    print_list.append("\n----------")
+    if not input_path_exists:
+      print_list.append(f"Input path ({input_path}) is not valid. It doesn't exist!")
+    else:
+      print_list.append(f"Input path: {input_path} is valid.")
+    
+    if not loaded_model:
+      if not output_path_exists:
+        print_list.append(f"Creating output path: {output_path}.")
+      else:
+        print_list.append(f"Output path ({output_path}) is not valid for a new model. It already exists!")
+    else:
+      print_list.append(f"Continuing training on path {output_path} for previous model.")
+    return print_list
+    
+    
+  def GetTrainingAttributes(self, tag_name: str):
+    tag = self.GetTrainingAttributeGroup(tag_name)
+    
+    return [
+      "--Tag Data--", 
+      f"Name: {tag.name}",     
+      f"Test Size: {tag.test_size}",
+      f"Batch Size: {tag.batch_size}",
+      f"Num Epoch: {tag.num_epoch}",
+      f"Learning Rate: {tag.learning_rate}",
+      f"Num Classes: {tag.num_classes}"
+    ]
+  
+  def GetTransformAttributes(self, transform_name: str):
+    return [f"--Transform Data--", f"Name: {transform_name}"]
+  
+  def PrintTrainingAttributes(self, tag_name: str):
+    tag_list = self.GetTrainingAttributes(tag_name)
+    
+    for i in tag_list:
+      print(i)
+    print()
+    
+  def PrintTransformAttributes(self, transform_name: str):
+    transform_attribute_List = self.GetTransformAttributes(transform_name)
+
+    for i in transform_attribute_List:
+      print(i)
+    print()
+    
+    
+  def Train(self, tag_name: str, transform_name: str, model_name: str, input_path: str, output_path: str, worker_amount: int, loaded_model: bool, model_load_path: str, doc_path: str, model_num: str):
+    
+    self.ValidatePathProcessing(input_path, output_path, loaded_model)
     
     # Selection from lists
-    training_attribute_group = self.GetTrainingAttributeGroup(training_attribute_group_name)
-    nn_transformation = self.GetNNTransformation(nn_transformation_name)
+    tag = self.GetTrainingAttributeGroup(tag_name)
+    nn_transformation = self.GetNNTransformation(transform_name)
 
     # Model Configuration
-    og_epoch = 0
-    pending_uploaded_loss: bool = True
     nn_model = self.GetModel(model_name)
     if (not loaded_model):
-      nn_model.in_features = nn_model.model.fc.in_features
-      nn_model.model.fc = torch.nn.Linear(nn_model.in_features, training_attribute_group.num_classes)
-      nn_model.criterion = torch.nn.CrossEntropyLoss()
-      nn_model.optimizer = torch.optim.Adam(nn_model.model.parameters(), lr=training_attribute_group.learning_rate)
-      pending_uploaded_loss = False
+      self.DefaultModel(model_name, tag_name)
     else:
-      og_epoch = nn_model.epoch
+      self.LoadModel(model_name, model_load_path, tag_name)
       
-
+    
     # Seeding and device setting
-    torch.manual_seed(1)
-    nn_model.model.to(self.nn_device)
+    torch.manual_seed(time.time())
+    
+    print()
+    self.PrintTrainingAttributes(tag_name)
+    self.PrintTransformAttributes(transform_name)
+    
+    doc_dir_path = f"./models/{model_num}/doc/"
+    doc_dir_path_exists = os.path.exists(doc_dir_path)
+    if (not doc_dir_path_exists):
+      os.mkdir(f"./models/{model_num}/doc/")
+    doc_file = open(doc_path, "a")
+    doc_file.write("\n")
+
+    path_processing_list = self.GetPathProcessing(input_path, output_path, loaded_model)
+    for i in path_processing_list:
+      doc_file.write(i)
+      doc_file.write("\n")
+    doc_file.write("\n")
+
+      
+    tag_attribute_list = self.GetTrainingAttributes(tag_name)
+    for i in tag_attribute_list:
+      doc_file.write(i)
+      doc_file.write("\n")
+    doc_file.write("\n")
+      
+    transform_attribute_list = self.GetTransformAttributes(transform_name)
+    for i in transform_attribute_list:
+      doc_file.write(i)
+      doc_file.write("\n")
+    doc_file.write("\n")
+    
 
     # Import dataset and prepare
     train_dataset = datasets.ImageFolder(input_path, transform=nn_transformation)
     train_dataset_size = len(train_dataset)
     indices = torch.randperm(train_dataset_size)
-    split = int(train_dataset_size * training_attribute_group.test_size)
+    split = int(train_dataset_size * tag.test_size)
     train_dataset = torch.utils.data.Subset(train_dataset, indices[split:])
-    train_dataloader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=training_attribute_group.batch_size, shuffle=True, num_workers=worker_amount)
+    train_dataloader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=tag.batch_size, shuffle=True, num_workers=worker_amount)
         
     # Training
-    print("\nBeginning training...\n-----------\n")
-    print(f"Starting at epoch {og_epoch}...")
-    print(f"Reaching for {training_attribute_group.num_epoch + og_epoch} epochs...")
-    for epoch in range(og_epoch, training_attribute_group.num_epoch + og_epoch):
+    start_epoch: int = nn_model.epoch
+    end_epoch: int = start_epoch + tag.num_epoch
+    
+    begin_training_list = ["\nBeginning training...\n-----------\n", 
+     f"Using device: {self.nn_device}", 
+     f"Starting at epoch {start_epoch}...",
+     f"Reaching for {end_epoch} epochs..."]
+
+    for i in begin_training_list:
+      print(i)
+      doc_file.write(i)
+      doc_file.write("\n")
+    doc_file.write("\n")
+    doc_file.flush()
+
+    for epoch in range(start_epoch, end_epoch):
       running_loss = 0
       correct_train = 0
       total_train = 0
-
+      
+      nn_model.model.to(self.nn_device)
+      # for i in nn_model.model.parameters():
+      #   print(f"Model device: ", i.device)
+      
+      # print(f"Model: {nn_model.model.device} ")
       nn_model.model.train()
       for images, labels in train_dataloader:
         images = images.to(self.nn_device)
         labels = labels.to(self.nn_device)
+        # print(f"Images device: {images.device} ")
+        # print(f"Labels device: {labels.device} ")
         
         output = nn_model.model(images)
-        loss = nn_model.criterion(output, labels)
-        if (pending_uploaded_loss):
-          loss = nn_model.loss
+        loss = nn_model.criterion(output.to(self.nn_device), labels.to(self.nn_device))
 
-        correct_train += (torch.max(output, dim=1)[1] == labels).sum()
-        total_train += labels.size(0)
+        correct_train += (torch.max(output.to(self.nn_device), dim=1)[1] == labels.to(self.nn_device)).sum()
+        total_train += labels.to(self.nn_device).size(0)
 
         nn_model.optimizer.zero_grad()
         loss.backward()
@@ -295,13 +440,13 @@ class NNDefault():
         running_loss += loss.item()
 
       print(f"completed epoch {epoch} with running loss {running_loss}...")
+      doc_file.write(f"\ncompleted epoch {epoch} with running loss {running_loss}...")
+      doc_file.flush()
       
       model_data = {
         "epoch" : epoch + 1,
         "model_state_dict" : nn_model.model.state_dict(),
         "optimizer_state_dict" : nn_model.optimizer.state_dict(),
-        "new_dict" : nn_model.model.fc.weight[:, 29],
-        "loss" : loss
       }
       torch.save(model_data, f'{output_path}{epoch}.pth')
    
@@ -326,12 +471,12 @@ class NNDefault():
     return self.GetLabel(probabilities.cpu().numpy().flatten())
     
   # Gets label and prints out a bunch of stuff
-  def PredictLong(self, model_name: str, image_path: str, enable_layer_ouput: bool, enable_classification_score: bool, enable_probability_array: bool):
+  def PredictLong(self, model_name: str, image_path: str, transform_name: str, enable_layer_ouput: bool, enable_classification_score: bool, enable_probability_array: bool):
 
     nn_model = self.GetModel(model_name)
     nn_model.model.eval()
     
-    nn_transform = self.GetNNTransformation("Default")
+    nn_transform = self.GetNNTransformation(transform_name)
 
     input_image = Image.open(image_path)
     image_tensor = nn_transform(input_image)[:3].unsqueeze(0)
@@ -361,17 +506,17 @@ class NNDefault():
     return self.GetLabel(probabilities)
 
 
-  def RunTestMatching(self, model_name: str, data_set_type: torch.utils.data.Dataset, training_data_path: str, test_data_path: str):
+  def RunTestMatching(self, model_name: str, transform_name: str, data_set_type: torch.utils.data.Dataset, training_data_path: str, test_data_path: str):
 
     nn_model = self.GetModel(model_name)
     model = nn_model.model
 
     device = self.nn_device
 
-    transform = self.GetNNTransformation("Default")
+    transform = self.GetNNTransformation(transform_name)
     
     training_attribute_group: TrainingAttributeGroup = TrainingAttributeGroup("Default", 0.2, 32, 5, 0.001, 29)
-    torch.manual_seed(1)
+    torch.manual_seed(time.time())
     train_dataset = datasets.ImageFolder(training_data_path, transform=transform) 
     num_train_samples = len(train_dataset)
     indices = torch.randperm(num_train_samples)

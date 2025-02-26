@@ -21,26 +21,71 @@ class NNDefaultTransform(NNTransform):
       transforms.ToTensor()
     ])
     return transform
+
 class NNVariableTransform(NNTransform):
   def GetTransformation(self):
+    random_rotation = random.uniform(0, 50)
+    random_brightness = random.uniform(0, 2.0)
+    random_contrast = random.uniform(0, 2.0)
+    random_saturation = random.uniform(0, 2.0)
+    random_hue = random.uniform(0, 0.5)
     transform = transforms.Compose([
-      transforms.RandomRotation(30),
-      transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.1),
+      transforms.RandomRotation(random_rotation),
+      transforms.ColorJitter(brightness=random_brightness, 
+                             contrast=random_contrast, 
+                             saturation=random_saturation, 
+                             hue=random_hue),
+      transforms.RandomPerspective(0.5, 0.1),
       transforms.Resize(128),
       transforms.ToTensor()
     ])
     return transform
 
+class NNRealisticTransform(NNTransform):
+    def GetTransformation(self):
+      random_rotation = random.uniform(0, 40)
+      random_brightness = random.uniform(0.7, 1.5)
+      random_contrast = random.uniform(0.7, 1.5)
+      random_saturation = random.uniform(0.7, 1.5)
+      random_hue = random.uniform(0, 0.5)
+      transform = transforms.Compose([
+        transforms.RandomRotation(random_rotation),
+        transforms.ColorJitter(brightness=random_brightness, 
+                              contrast=random_contrast, 
+                              saturation=random_saturation, 
+                              hue=random_hue),
+        transforms.RandomPerspective(0.5, 0.2),
+        transforms.RandomCrop(size=(128,128)),
+        transforms.Resize(128),
+        transforms.ToTensor()
+      ])
+      return transform
+    
+class NNRealistic2Transform(NNTransform):
+  def GetTransformation(self):
+    transform = transforms.Compose([
+      transforms.RandomRotation(degrees=(0,45)),
+      transforms.ColorJitter(brightness=0.5, 
+                            contrast=0.3, 
+                            saturation=0.5, 
+                            hue=0.4),
+      transforms.RandomPerspective(0.5, 0.2),
+      transforms.Resize(128),
+      transforms.ToTensor()
+    ])
+    return transform 
    
 class NNASL(NNDefault):
   def InitExtension(self):
     self.AddTrainingAttributeGroup("Default", 0.2, 32, 5, 0.001, 29)
     self.AddTrainingAttributeGroup("Speed", 0.2, 32, 100, 0.01, 29)
-    self.AddTrainingAttributeGroup("Accurate", 0.2, 32, 100, 0.001, 29)
-    self.AddTrainingAttributeGroup("Funny", 0.2, 32, 100, 0.0001, 29)
+    self.AddTrainingAttributeGroup("Accurate", 0.20, 256, 500, 0.01, 29)
+    self.AddTrainingAttributeGroup("Funny", 0.2, 128, 500, 0.01, 29)
     
     self.AddNNTransformation(NNDefaultTransform("Default"))
     self.AddNNTransformation(NNVariableTransform("Variable"))
+    self.AddNNTransformation(NNRealisticTransform("Realistic"))
+    self.AddNNTransformation(NNRealistic2Transform("Realistic2"))
 
     self.AddNNModel(NNModel("Default", False))
     self.AddNNModel(NNModel("Mobile", True))
@@ -54,23 +99,24 @@ if __name__ == "__main__":
   
   path_manager: TrainingDataPathManager = TrainingDataPathManager("path_manager")
 
-  load_model_option: bool = True                                                                 # Want to load an existing model before training?
-
-  input_path: str = path_manager.GetLiteralDataPath("training_path")
-  output_path: str = path_manager.GetLiteralDataPath("model_path") + "10.0/"                     # Edit last string to be a nonexisting path in "models/"
-  load_existing_model_path: str = path_manager.GetLiteralDataPath("model_path") + "10.0/0.pth"   # If load_model_option: Edit last string to be an existing path to a .pth
+  tag_type: str                 = "Funny"
+  transform_type: str           = "Realistic2"
+  model_type: str               = "Default"
+  model_num: str                = "17.0"
+  existing_model_num: str       = "153"
+  input_path: str               = path_manager.GetLiteralDataPath("training_path")
+  output_path: str              = path_manager.GetLiteralDataPath("model_path") + model_num + "/"
+  num_workers: int              = 10
+  is_model_loaded: bool         = True
+  load_existing_model_path: str = path_manager.GetLiteralDataPath("model_path") + model_num + "/" + existing_model_num + ".pth"  
+  documentation_path: str       = path_manager.GetLiteralDataPath("model_path") + model_num + "/doc/" + model_num + "." + existing_model_num + ".txt"
 
   nn_asl: NNASL = NNASL("nn_asl")
-  if (load_model_option):
-    nn_asl.LoadModel("Default", load_existing_model_path)                                        # Edit model type if needed: "Default", "Mobile"
     
   timer_start: float = GetCurrentTimeInMin()
-  
-  # Edit training type, transformation type, model type, input path, output path, number of workers, using a previous model
-  nn_asl.Train("Funny", "Variable", "Default", input_path, output_path, 10, load_model_option)       
+  nn_asl.Train(tag_type, transform_type, model_type, input_path, output_path, num_workers, is_model_loaded, load_existing_model_path, documentation_path, model_num)       
   timer_end: float = GetCurrentTimeInMin()
 
   print(f"Total minutes: {timer_end-timer_start}")
   
-
   

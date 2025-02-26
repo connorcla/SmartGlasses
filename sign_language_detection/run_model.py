@@ -68,12 +68,27 @@ class NNVariableTransform(NNTransform):
       transforms.ToTensor()
     ])
     return transform
-
+class NNRealistic2Transform(NNTransform):
+  def GetTransformation(self):
+    transform = transforms.Compose([
+      transforms.RandomRotation(degrees=(0,45)),
+      transforms.ColorJitter(brightness=0.5, 
+                            contrast=0.3, 
+                            saturation=0.5, 
+                            hue=0.4),
+      transforms.RandomPerspective(0.5, 0.2),
+      transforms.Resize(128),
+      transforms.ToTensor()
+    ])
+    return transform 
    
 class NNASL(NNDefault):
   def InitExtension(self):
+    self.AddTrainingAttributeGroup("Funny", 0.2, 32, 100, 0.01, 29) 
+
     self.AddNNTransformation(NNDefaultTransform("Default"))
     self.AddNNTransformation(NNVariableTransform("Variable"))
+    self.AddNNTransformation(NNRealistic2Transform("Realistic2"))
 
     self.AddNNModel(NNModel("Default", False))
     self.AddNNModel(NNModel("Mobile", True))
@@ -87,25 +102,35 @@ if __name__ == "__main__":
   
   path_manager: RunModelPathManager = RunModelPathManager("run_model_path_manager")
 
-  model_path: str = path_manager.GetLiteralDataPath("models_path") + "6.0/53.pth"       # Specify model path name here
-  input_path: str = path_manager.GetLiteralDataPath("G")                                # Specify input path name here
+  tag_type: str                      = "Funny"
+  transform_type: str                = "Realistic2"
+  model_type: str                    = "Default"
+  model_num: str                     = "17.0"
+  existing_model_num: str            = "153"
+  enable_layer_output: bool          = False
+  enable_classification_output: bool = True
+  enable_probability_array: bool     = True
+  model_path: str = path_manager.GetLiteralDataPath("models_path") + model_num + "/" + existing_model_num + ".pth"
+  input_path: str = path_manager.GetLiteralDataPath("G")                                                       
 
   asl_nn_model: NNASL = NNASL("asl_nn_model")
-  asl_nn_model.LoadModel("Default", model_path)                                         # Change to "Modile" if needed
+  asl_nn_model.LoadModel(model_type, model_path, tag_type)                                                     
+  
   
   
   # ----- Matplot Lib ------
   # Comment out if you do not want to test model on test files
-  # asl_nn_model.RunTestMatching("Default", 
-  #                              ASLTestDataset, 
-  #                              path_manager.GetLiteralDataPath("training_path"), 
-  #                              path_manager.GetLiteralDataPath("test_path"), 
-  #                             )
+  asl_nn_model.RunTestMatching(model_type, 
+                               transform_type,
+                               ASLTestDataset, 
+                               path_manager.GetLiteralDataPath("training_path"), 
+                               path_manager.GetLiteralDataPath("test_path"), 
+                              )
   # ------------------------
 
 
   start_time: int = round(time.time() * 1000)
-  label = asl_nn_model.PredictLong("Default", input_path, False, True, True)            # Customize prediction parameters
+  label = asl_nn_model.PredictLong(model_type, input_path, transform_type, enable_layer_output, enable_classification_output, enable_probability_array)
   letter = ConvertLabelToNum(label)
   print(f"LABEL: {label}") 
   print(f"LETTER: {letter}") 
