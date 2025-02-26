@@ -2,6 +2,8 @@ import RPi.GPIO as GPIO
 import time
 
 from libraries.state_machine_tools import *
+from libraries.speech_tools import *
+from libraries.oled_print_tools import *
 
 class Glasses_State_Machine(StateMachine):
     def InitExtension(self):
@@ -17,6 +19,8 @@ class Glasses_State_Machine(StateMachine):
         self.AddState(ASLCapTransition("asl_cap", self))
 
         self.curr_state: State = self.GetState("init_state")
+
+        self.timer = 0
     
     def Execute(self):
         if(self.is_working):
@@ -110,6 +114,7 @@ class Caption(State):
         GPIO.output(blue_led, GPIO.HIGH)
 
         # Speech Recognition Loop ToDo PUT IN
+        start_listening(self.timer)
 
 
 class Color(State):
