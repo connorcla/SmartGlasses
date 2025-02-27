@@ -1,2 +1,13 @@
 /Documentation
-setup.sh
+sign_language_detection/datasets/
+sign_language_detection/checkpoints/
+sign_language_detection/input-data/
+sign_language_detection/models/
+sign_language_detection/plot_training.py
+sign_language_detection/hi_there_asl
+sign_language_detection/HandTakenASL
+sign_language_detection/hand_taken_asl_close
+sign_language_detection/IMG_5643.JPG
+sign_language_detection/IMG_5644.JPG
+
+libraries/__pycache__
