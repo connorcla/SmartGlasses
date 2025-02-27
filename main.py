@@ -4,6 +4,7 @@ import time
 from libraries.state_machine_tools import *
 from libraries.speech_tools import *
 from libraries.oled_print_tools import *
+from libraries.nn_tools import *
 
 class Glasses_State_Machine(StateMachine):
     def InitExtension(self):
