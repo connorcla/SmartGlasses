@@ -80,7 +80,7 @@ class NNASL(NNDefault):
     self.AddTrainingAttributeGroup("Default", 0.2, 32, 5, 0.001, 29)
     self.AddTrainingAttributeGroup("Speed", 0.2, 32, 100, 0.01, 29)
     self.AddTrainingAttributeGroup("Accurate", 0.20, 256, 500, 0.01, 29)
-    self.AddTrainingAttributeGroup("Funny", 0.2, 128, 500, 0.01, 29)
+    self.AddTrainingAttributeGroup("Funny", 0.2, 64, 800, 0.01, 29)
     
     self.AddNNTransformation(NNDefaultTransform("Default"))
     self.AddNNTransformation(NNVariableTransform("Variable"))
@@ -103,14 +103,15 @@ if __name__ == "__main__":
   transform_type: str           = "Realistic2"
   model_type: str               = "Default"
   model_num: str                = "17.0"
-  existing_model_num: str       = "153"
+  existing_model_num: str       = "157"
   input_path: str               = path_manager.GetLiteralDataPath("training_path")
   output_path: str              = path_manager.GetLiteralDataPath("model_path") + model_num + "/"
-  num_workers: int              = 10
+  num_workers: int              = 16
   is_model_loaded: bool         = True
   load_existing_model_path: str = path_manager.GetLiteralDataPath("model_path") + model_num + "/" + existing_model_num + ".pth"  
   documentation_path: str       = path_manager.GetLiteralDataPath("model_path") + model_num + "/doc/" + model_num + "." + existing_model_num + ".txt"
 
+  torch.manual_seed(1)
   nn_asl: NNASL = NNASL("nn_asl")
     
   timer_start: float = GetCurrentTimeInMin()

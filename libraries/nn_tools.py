@@ -3,7 +3,7 @@ import os
 
 import torch
 import torchvision
-from torchvision import transforms, datasets
+from torchvision import transforms, datasets, models
 
 import numpy as np
 import pandas as pd
@@ -215,15 +215,17 @@ class NNDefault():
 
     if (not nn_model.is_mobile):
       # Standard
-      model_pull = torch.load(model_pth_path, weights_only=False)
+      nn_model.model = torch.load(model_pth_path, weights_only=False)
+      # model_pull = torch.load(model_pth_path, weights_only=False)
 
-      nn_model.epoch = model_pull["epoch"]
-      nn_model.model = torchvision.models.resnet50(weights=True) # 2048, 1000 default
-      nn_model.model.fc = torch.nn.Linear(2048, tag.num_classes, device=self.nn_device)
+      # nn_model.epoch = model_pull["epoch"]
+      # nn_model.model = torchvision.models.resnet50() # 2048, 1000 default
+      # nn_model.model.fc = torch.nn.Linear(2048, tag.num_classes, device=self.nn_device)
       # print("--Debug--")
       # print(nn_model.model.fc)
       # print("------")
-      nn_model.model.load_state_dict(model_pull, strict=False)
+      # nn_model.model.load_state_dict(model_pull, strict=False)
+      # print(f"Checksum: {torch.sum(torch.stack([p.double().abs().sum() for p in nn_model.model.parameters()]))}")
       
       # preload_model_dict = nn_model.model.state_dict()
       # fc_weights = model_pull["model_state_dict"]["fc.weight"]
@@ -353,8 +355,6 @@ class NNDefault():
       
     
     # Seeding and device setting
-    torch.manual_seed(time.time())
-    
     print()
     self.PrintTrainingAttributes(tag_name)
     self.PrintTransformAttributes(transform_name)
@@ -481,11 +481,14 @@ class NNDefault():
     input_image = Image.open(image_path)
     image_tensor = nn_transform(input_image)[:3].unsqueeze(0)
     
+
     outputs = ""
     probabilities = []   
     with torch.no_grad():
+      nn_model.model.eval()
       image_tensor = image_tensor.to(self.nn_device)
-      outputs = nn_model.model(image_tensor)
+      outputs = nn_model.model.forward(image_tensor)
+      # classification_score, probabilities = torch.max(outputs, 1)
       probabilities = torch.nn.functional.softmax(outputs, dim=1)
       classification_score, probability_array = torch.max(outputs, 1)
     
@@ -498,6 +501,7 @@ class NNDefault():
       print("\n------------------------------------\n")
       
     if (enable_classification_score):
+      pass
       print(f"\nCLASSIFICATION SCORE: {classification_score.item()}")
 
     if (enable_probability_array):
@@ -516,7 +520,6 @@ class NNDefault():
     transform = self.GetNNTransformation(transform_name)
     
     training_attribute_group: TrainingAttributeGroup = TrainingAttributeGroup("Default", 0.2, 32, 5, 0.001, 29)
-    torch.manual_seed(time.time())
     train_dataset = datasets.ImageFolder(training_data_path, transform=transform) 
     num_train_samples = len(train_dataset)
     indices = torch.randperm(num_train_samples)

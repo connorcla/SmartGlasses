@@ -29,6 +29,8 @@ class RunModelPathManager(DataPathManager):
     
     # Singular Image Paths
     self.AddDataPath("G", "./input/G_test.jpg")
+    self.AddDataPath("i", "./hi_there_asl/i.JPG")
+    self.AddDataPath("e", "./hi_there_asl/e.JPG")
 
 
 class ASLTestDataset(torch.utils.data.Dataset):
@@ -100,32 +102,35 @@ def ConvertLabelToNum(label: int):
 
 if __name__ == "__main__":
   
+  torch.manual_seed(1)
+
   path_manager: RunModelPathManager = RunModelPathManager("run_model_path_manager")
 
   tag_type: str                      = "Funny"
-  transform_type: str                = "Realistic2"
+  transform_type: str                = "Default"
   model_type: str                    = "Default"
-  model_num: str                     = "17.0"
-  existing_model_num: str            = "153"
+  model_num: str                     = "35.0"
+  existing_model_num: str            = "11"
   enable_layer_output: bool          = False
   enable_classification_output: bool = True
   enable_probability_array: bool     = True
   model_path: str = path_manager.GetLiteralDataPath("models_path") + model_num + "/" + existing_model_num + ".pth"
-  input_path: str = path_manager.GetLiteralDataPath("G")                                                       
+  input_path: str = path_manager.GetLiteralDataPath("e")                                                       
 
+
+  # torch.cuda.manual_seed(1)
   asl_nn_model: NNASL = NNASL("asl_nn_model")
   asl_nn_model.LoadModel(model_type, model_path, tag_type)                                                     
   
   
-  
   # ----- Matplot Lib ------
   # Comment out if you do not want to test model on test files
-  asl_nn_model.RunTestMatching(model_type, 
-                               transform_type,
-                               ASLTestDataset, 
-                               path_manager.GetLiteralDataPath("training_path"), 
-                               path_manager.GetLiteralDataPath("test_path"), 
-                              )
+  # asl_nn_model.RunTestMatching(model_type, 
+  #                              transform_type,
+  #                              ASLTestDataset, 
+  #                              path_manager.GetLiteralDataPath("training_path"), 
+  #                              path_manager.GetLiteralDataPath("test_path"), 
+  #                             )
   # ------------------------
 
 
