@@ -462,12 +462,24 @@ class NNDefault():
     return max_index
   
   # Straight up gets the label
-  def PredictShort(self, model, image_tensor, device):
-    model.eval()
+  def PredictShort(self, model_name: str, image_path: str, transform_name: str):
+    nn_model = self.GetModel(model_name)
+    nn_model.model.eval()
+    
+    nn_transform = self.GetNNTransformation(transform_name)
+
+    input_image = Image.open(image_path)
+    image_tensor = nn_transform(input_image)[:3].unsqueeze(0)
+    
+    outputs = ""
+    probabilities = []   
     with torch.no_grad():
-      image_tensor = image_tensor.to(device)
-      outputs = model(image_tensor)
+      nn_model.model.eval()
+      image_tensor = image_tensor.to(self.nn_device)
+      outputs = nn_model.model.forward(image_tensor)
       probabilities = torch.nn.functional.softmax(outputs, dim=1)
+    
+    probabilities = probabilities.cpu().numpy().flatten()
     return self.GetLabel(probabilities.cpu().numpy().flatten())
     
   # Gets label and prints out a bunch of stuff
