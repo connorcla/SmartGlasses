@@ -29,8 +29,8 @@ class RunModelPathManager(DataPathManager):
     
     # Singular Image Paths
     self.AddDataPath("G", "./input/G_test.jpg")
-    self.AddDataPath("i", "./hi_there_asl/i.JPG")
-    self.AddDataPath("e", "./hi_there_asl/e.JPG")
+    # self.AddDataPath("i", "./hi_there_asl/i.JPG")
+    # self.AddDataPath("e", "./hi_there_asl/e.JPG")
 
 
 class ASLTestDataset(torch.utils.data.Dataset):
@@ -115,7 +115,7 @@ if __name__ == "__main__":
   enable_classification_output: bool = True
   enable_probability_array: bool     = True
   model_path: str = path_manager.GetLiteralDataPath("models_path") + model_num + "/" + existing_model_num + ".pth"
-  input_path: str = path_manager.GetLiteralDataPath("e")                                                       
+  input_path: str = path_manager.GetLiteralDataPath("G")                                                       
 
 
   # torch.cuda.manual_seed(1)
@@ -125,12 +125,12 @@ if __name__ == "__main__":
   
   # ----- Matplot Lib ------
   # Comment out if you do not want to test model on test files
-  # asl_nn_model.RunTestMatching(model_type, 
-  #                              transform_type,
-  #                              ASLTestDataset, 
-  #                              path_manager.GetLiteralDataPath("training_path"), 
-  #                              path_manager.GetLiteralDataPath("test_path"), 
-  #                             )
+  asl_nn_model.RunTestMatching(model_type, 
+                               transform_type,
+                               ASLTestDataset, 
+                               path_manager.GetLiteralDataPath("training_path"), 
+                               path_manager.GetLiteralDataPath("test_path"), 
+                              )
   # ------------------------
 
 

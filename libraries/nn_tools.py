@@ -109,7 +109,7 @@ class NNModel():
     self.loss = None
 
     if (not is_mobile):
-      self.model = torchvision.models.resnet50(weights=True)
+      self.model = torchvision.models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V2)
       self.optimizer = torch.optim.Adam(self.model.parameters())
     else:
       self.model = torchvision.models.mobilenet_v2(pretrained=True)
@@ -215,7 +215,7 @@ class NNDefault():
 
     if (not nn_model.is_mobile):
       # Standard
-      nn_model.model = torch.load(model_pth_path, weights_only=False)
+      nn_model.model = torch.load(model_pth_path, weights_only=False, map_location=self.nn_device)
       # model_pull = torch.load(model_pth_path, weights_only=False)
 
       # nn_model.epoch = model_pull["epoch"]
