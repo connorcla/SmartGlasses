@@ -20,7 +20,6 @@ class Glasses_State_Machine(StateMachine):
 
         self.curr_state: State = self.GetState("init_state")
 
-        self.timer = 0
     
     def Execute(self):
         if(self.is_working):
@@ -35,8 +34,10 @@ class Glasses_State_Machine(StateMachine):
                 case "caption":
                     if GPIO.input(power_btn) and not GPIO.input(mode_btn):
                         self.curr_state = self.GetState("off_transition")
+                        self.GetState("caption").timer = 0
                     elif not GPIO.input(power_btn) and GPIO.input(mode_btn):
                         self.curr_state = self.GetState("cap_col")
+                        self.GetState("caption").timer = 0
                     else:
                         self.curr_state = self.GetState("caption")
                 case "color":
@@ -106,6 +107,8 @@ class SystemOff(State):
 class Caption(State):
     def InitExtension(self):
         self.action_manager.AddAction(self.SpeechLoop)
+        
+        self.timer = 0
 
     def SpeechLoop(self):
         GPIO.output(power_led, GPIO.HIGH)
@@ -114,7 +117,7 @@ class Caption(State):
         GPIO.output(blue_led, GPIO.HIGH)
 
         # Speech Recognition Loop ToDo PUT IN
-        start_listening(self.timer)
+        self.timer = start_listening(self.timer)
 
 
 class Color(State):
@@ -148,6 +151,7 @@ class OnTransition(State):
         self.action_manager.AddAction(self.PrintOnTransition)
 
     def PrintOnTransition(self):
+        clear_screen(0)
         print("On transition")
 
 
@@ -156,6 +160,7 @@ class OffTransition(State):
         self.action_manager.AddAction(self.PrintOffTransition)
 
     def PrintOffTransition(self):
+        clear_screen(0)
         print("Off transition")
 
 
@@ -164,6 +169,7 @@ class CapColTransition(State):
         self.action_manager.AddAction(self.PrintCapColTransition)
 
     def PrintCapColTransition(self):
+        clear_screen(0)
         print("CapCol transition")
 
 
@@ -172,6 +178,7 @@ class ColASLTransition(State):
         self.action_manager.AddAction(self.PrintColASLTransition)
 
     def PrintColASLTransition(self):
+        clear_screen(0)
         print("ColASL transition")
 
 
@@ -180,22 +187,23 @@ class ASLCapTransition(State):
         self.action_manager.AddAction(self.PrintASLCapTransition)
 
     def PrintASLCapTransition(self):
+        clear_screen(0)
         print("ASLCap transition")
 
 
 
 if __name__ == "__main__":
 
-    GPIO.setmode(GPIO.BOARD)
+    GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)
     
-    power_led = 29
-    red_led = 31
-    green_led = 33
-    blue_led = 35
+    power_led = 5
+    red_led = 6
+    green_led = 13
+    blue_led = 19
     
-    power_btn = 38
-    mode_btn = 40
+    power_btn = 20
+    mode_btn = 21
     
     GPIO.setup(power_led, GPIO.OUT)
     GPIO.setup(red_led, GPIO.OUT)
@@ -209,3 +217,4 @@ if __name__ == "__main__":
     glasses_sm.Start()
     while True:
         glasses_sm.Execute()
+        time.sleep(0.01)

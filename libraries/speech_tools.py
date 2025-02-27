@@ -9,10 +9,11 @@ def recognize_speech(timer):
 
     rec = sr.Recognizer()
     rec.energy_threshold = 400
+    
+    print(timer)
 
     if timer != 0:
-        print_to_screen("", timer)
-        return
+        return print_to_screen("", timer)
 
     try:
         with sr.Microphone() as source:
@@ -22,7 +23,7 @@ def recognize_speech(timer):
                 audio = rec.listen(source, timeout=0.5, phrase_time_limit=10)
             except sr.WaitTimeoutError:
                 #print("Timeout")
-                return
+                return timer
     
             try:
                 text = rec.recognize_google(audio, language="en-EN")
@@ -33,16 +34,21 @@ def recognize_speech(timer):
                 sys.stdout.flush()
 
                 #Use OLED library
-                print_to_screen(text, timer)
+                return print_to_screen(text, timer)
             except sr.UnknownValueError:
                 #print("Google Web Speech API could not understand the audio")
                 pass
             except sr.RequestError as e:
                 print(f"Could not request results from Google Web Speech API; {e}")
+            except KeyboardInterrupt:
+                print("Exiting program")
+                return timer
     except KeyboardInterrupt:
         print("Exiting program")
-        return
+        return timer
+    
+    return timer
             
 
 def start_listening(timer):
-    recognize_speech(timer)
+    return recognize_speech(timer)
