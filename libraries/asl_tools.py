@@ -4,7 +4,7 @@ import subprocess
 class MainPathManager(DataPathManager):
   def InitExtension(self):
     
-    self.AddDataPath("model_path", "./model/")
+    self.AddDataPath("model_path", "./asl_model/")
     self.AddDataPath("image_path", "./camera_image/captured_image.jpg")
 
 class NNDefaultTransform(NNTransform):

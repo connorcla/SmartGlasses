@@ -148,11 +148,16 @@ class ASL(State):
         GPIO.output(red_led, GPIO.LOW)
         GPIO.output(green_led, GPIO.HIGH)
         GPIO.output(blue_led, GPIO.LOW)
+        
+        letter = "default"
 
         # ASL Loop ToDo PUT IN
-        label = asl_nn_model.PredictShort(model_type, input_path, transform_type)
-        letter = ConvertLabelToChar(label)
-        self.asl_timer = print_to_screen(letter)
+        if(self.asl_timer == 0):
+            CaptureImage()
+            label = asl_nn_model.PredictShort(model_type, input_path, transform_type)
+            letter = ConvertLabelToChar(label)
+        
+        self.asl_timer = print_to_screen(letter, self.asl_timer)
 
 
 

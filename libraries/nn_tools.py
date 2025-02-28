@@ -479,8 +479,8 @@ class NNDefault():
       outputs = nn_model.model.forward(image_tensor)
       probabilities = torch.nn.functional.softmax(outputs, dim=1)
     
-    probabilities = probabilities.cpu().numpy().flatten()
-    return self.GetLabel(probabilities.cpu().numpy().flatten())
+    #probabilities = probabilities.cpu().numpy().flatten()
+    return self.GetLabel(probabilities.numpy().flatten())
     
   # Gets label and prints out a bunch of stuff
   def PredictLong(self, model_name: str, image_path: str, transform_name: str, enable_layer_ouput: bool, enable_classification_score: bool, enable_probability_array: bool):
