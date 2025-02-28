@@ -17,3 +17,9 @@ sudo apt install python3-dev python3-pip libfreetype6-dev libjpeg-dev libopenjp2
 if using on venv:
 
 deactivate
+
+HOW TO RUN:
+
+in "current" directory
+
+python3 model.py
