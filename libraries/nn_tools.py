@@ -198,6 +198,7 @@ class NNDefault():
     
     # Manual Configuration
     nn_model.epoch = 0
+    nn_model.model = nn_model.model()
 
     nn_model.in_features = nn_model.model.fc.in_features
     nn_model.optimizer = torch.optim.Adam(nn_model.model.parameters(), lr=tag.learning_rate)
@@ -216,6 +217,8 @@ class NNDefault():
     if (not nn_model.is_mobile):
       # Standard
       nn_model.model = torch.load(model_pth_path, weights_only=False, map_location=self.nn_device)
+      if (nn_model.model == None):
+        print("Empty")
       # model_pull = torch.load(model_pth_path, weights_only=False)
 
       # nn_model.epoch = model_pull["epoch"]
@@ -461,6 +464,14 @@ class NNDefault():
         max_index = i
     return max_index
   
+  def PredictNormal(self, model, image_tensor, device):
+    model.eval()
+    with torch.no_grad():
+      image_tensor = image_tensor.to(device)
+      outputs = model(image_tensor)
+      probabilities = torch.nn.functional.softmax(outputs, dim=1)
+    return self.GetLabel(probabilities.cpu().numpy().flatten())
+
   # Straight up gets the label
   def PredictShort(self, model_name: str, image_path: str, transform_name: str):
     nn_model = self.GetModel(model_name)
@@ -556,7 +567,7 @@ class NNDefault():
 
       # print(f"Predicition: {prediction}")
       ax[i][j].imshow(img.cpu().permute(1, 2, 0))
-      ax[i][j].set_title(f"P:{self.PredictShort(model, img[:3].unsqueeze(0), device)}")
+      ax[i][j].set_title(f"P:{self.PredictNormal(model, img[:3].unsqueeze(0), device)}")
       ax[i][j].axis('off')
       j += 1
       if j == columns:
