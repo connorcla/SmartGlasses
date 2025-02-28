@@ -1,10 +1,12 @@
 import RPi.GPIO as GPIO
 import time
+import subprocess
 
 from libraries.state_machine_tools import *
 from libraries.speech_tools import *
 from libraries.oled_print_tools import *
-from libraries.nn_tools import *
+from libraries.asl_tools import *
+
 
 class Glasses_State_Machine(StateMachine):
     def InitExtension(self):
@@ -51,8 +53,10 @@ class Glasses_State_Machine(StateMachine):
                 case "asl":
                     if GPIO.input(power_btn) and not GPIO.input(mode_btn):
                         self.curr_state = self.GetState("off_transition")
+                        self.GetState("asl").asl_timer = 0
                     elif not GPIO.input(power_btn) and GPIO.input(mode_btn):
                         self.curr_state = self.GetState("asl_cap")
+                        self.GetState("asl").asl_timer = 0
                     else:
                         self.curr_state = self.GetState("asl")
                 case "on_transition":
@@ -137,6 +141,7 @@ class Color(State):
 class ASL(State):
     def InitExtension(self):
         self.action_manager.AddAction(self.ASLLoop)
+        self.asl_timer = 0
 
     def ASLLoop(self):
         GPIO.output(power_led, GPIO.HIGH)
@@ -145,6 +150,10 @@ class ASL(State):
         GPIO.output(blue_led, GPIO.LOW)
 
         # ASL Loop ToDo PUT IN
+        label = asl_nn_model.PredictShort(model_type, input_path, transform_type)
+        letter = ConvertLabelToChar(label)
+        self.asl_timer = print_to_screen(letter)
+
 
 
 class OnTransition(State):
@@ -195,6 +204,24 @@ class ASLCapTransition(State):
 
 if __name__ == "__main__":
 
+    # --------------------------------------------------
+
+    torch.manual_seed(1)
+
+    path_manager: MainPathManager = MainPathManager("main_model_path_manager")
+
+    tag_type: str                      = "Default"
+    transform_type: str                = "Default"
+    model_type: str                    = "Default"
+    model_num: str                     = "35.0.11"
+    model_path: str = path_manager.GetLiteralDataPath("model_path") + model_num + ".pth"
+    input_path: str = path_manager.GetLiteralDataPath("image_path")                       
+
+    asl_nn_model: NNASL = NNASL("asl_nn_model")
+    asl_nn_model.LoadModel(model_type, model_path, tag_type)  
+
+    # --------------------------------------------------
+
     GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)
     
@@ -212,7 +239,7 @@ if __name__ == "__main__":
     GPIO.setup(blue_led, GPIO.OUT)
     GPIO.setup(power_btn, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
     GPIO.setup(mode_btn, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-    
+  
     
     glasses_sm = Glasses_State_Machine("glasses_state_machine", 10)
     glasses_sm.Start()
