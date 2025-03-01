@@ -2,8 +2,20 @@ import sys
 import speech_recognition as sr
 import sounddevice
 import threading
+import io
+import datetime
 
 from libraries.oled_print_tools import *
+
+def check_sentence_dur(audio, min_duration=0.25):
+    audio_stream = io.BytesIO(audio.get_wav_data())
+    import wave
+    with wave.open(audio_stream, "rb") as wf:
+        frames = wf.getnframes()
+        rate = wf.getframerate()
+        duration = frames / float(rate)
+        return duration >= min_duration
+        
 
 def recognize_speech(timer):
 
@@ -24,6 +36,9 @@ def recognize_speech(timer):
             except sr.WaitTimeoutError:
                 #print("Timeout")
                 return timer
+                
+            if not check_sentence_dur(audio):
+                return timer
     
             try:
                 text = rec.recognize_google(audio, language="en-EN")
@@ -32,6 +47,11 @@ def recognize_speech(timer):
                 sys.stdout.write(text)
                 sys.stdout.write(". ")
                 sys.stdout.flush()
+                
+                if text == "Time":
+                    now = datetime.datetime.now()
+                    now_str = now.strftime("%H:%M %m-%d-%Y")
+                    return print_to_screen("Current time:\n\n" + now_str, timer)
 
                 #Use OLED library
                 return print_to_screen(text, timer)
@@ -45,6 +65,7 @@ def recognize_speech(timer):
                 return timer
     except KeyboardInterrupt:
         print("Exiting program")
+        exit()
         return timer
     
     return timer
