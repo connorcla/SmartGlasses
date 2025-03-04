@@ -10,9 +10,7 @@ from PIL import Image, ImageDraw, ImageFont
 from luma.oled.device import ssd1306
 from luma.core.interface.serial import spi
 from luma.core.render import canvas
-
-rec = sr.Recognizer()
-rec.energy_threshold = 400
+import subprocess
 
 def print_to_screen(text):
     print("screen")
@@ -46,6 +44,16 @@ def print_to_screen(text):
 
     time.sleep(3)
     disp.clear()
+    
+    
+def capture_image(filename="captured_image.jpg"):
+	try:
+		subprocess.run(["rpicam-still", "--immediate", "-o", filename], check=True)
+		print("Image captured successfully")
+	except subprocess.CalledProcessError:
+		print("Error: Failed to capture image.")
+		exit()
+        
 
 # Load color data from CSV
 def load_color_data(file_path):
@@ -114,10 +122,10 @@ def main():
     knn_model, label_encoder = train_color_model(color_df)
     
     # Open camera feed
-    cap = cv2.VideoCapture(0)
-    if not cap.isOpened():
-        print("Error: Could not open video stream.")
-        exit()
+    #cap = cv2.VideoCapture(0)
+    #if not cap.isOpened():
+    #    print("Error: Could not open video stream.")
+    #    exit()
     
     print("Starting Calibration Mode...")
     print("Press '1' for Red, '2' for Yellow, '3' for Blue")
@@ -131,11 +139,14 @@ def main():
     yellow_ref = color_df[color_df['Name'] == 'Yellow'][['Red', 'Green', 'Blue']].values[0]
     blue_ref = color_df[color_df['Name'] == 'Blue'][['Red', 'Green', 'Blue']].values[0]
     
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            print("Failed to grab frame.")
-            break
+    for i in range(3):
+        #ret, frame = cap.read()
+        #if not ret:
+        #    print("Failed to grab frame.")
+        #    break
+        
+        capture_image("captured_image.jpg")
+        frame = cv2.imread("captured_image.jpg")
         
         # Get the center of the frame
         height, width, _ = frame.shape
@@ -154,13 +165,13 @@ def main():
         key = cv2.waitKey(1) & 0xFF
 
         # Capture Red, Yellow, and Blue based on key press
-        if key == ord('1') and red_value is None:
+        if i == 0:
             red_value = get_average_rgb(frame, center, size=25)
             print(f"Red Value Captured: {red_value}")
-        elif key == ord('2') and yellow_value is None:
+        elif i == 1:
             yellow_value = get_average_rgb(frame, center, size=25)
             print(f"Yellow Value Captured: {yellow_value}")
-        elif key == ord('3') and blue_value is None:
+        elif i == 2:
             blue_value = get_average_rgb(frame, center, size=25)
             print(f"Blue Value Captured: {blue_value}")
 
@@ -178,10 +189,13 @@ def main():
     blue_diff = blue_value - blue_ref
 
     while True:
-        ret, frame = cap.read()
-        if not ret:
-            print("Failed to grab frame.")
-            break
+        #ret, frame = cap.read()
+        #if not ret:
+        #    print("Failed to grab frame.")
+        #    break
+        
+        capture_image("captured_image.jpg")
+        frame = cv2.imread("captured_image.jpg")
 
         # Get the center of the frame
         height, width, _ = frame.shape
