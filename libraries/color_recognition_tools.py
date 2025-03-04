@@ -1,39 +1,11 @@
 import cv2
 import numpy as np
 import pandas as pd
-from collections import namedtuple
-import math
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import LabelEncoder
 import subprocess
-import time
 
-# Define a named tuple for color data
-Color = namedtuple('Color', ['Name', 'Hex', 'R', 'G', 'B'])
-
-# Load the CSV data into a pandas DataFrame
-csv_data = pd.read_csv('sample-colors.csv')  # Change the path to your actual CSV file
-
-# Convert percentage columns to integer values
-def percent_to_int(value):
-    return int(float(value.rstrip('%')))
-
-# List of colors from the CSV file
-colors = []
-for _, row in csv_data.iterrows():
-    name = row['Name']
-    hex_value = row['Hex Triplet']
-    r = percent_to_int(row['Red'])
-    g = percent_to_int(row['Green'])
-    b = percent_to_int(row['Blue'])
-    colors.append(Color(name, hex_value, r, g, b))
-
-# Function to calculate the Euclidean distance between two RGB colors
-def color_distance(c1, c2):
-    return math.sqrt((c1.R - c2.R) ** 2 + (c1.G - c2.G) ** 2 + (c1.B - c2.B) ** 2)
-
-# Function to find the closest matching color from the CSV
-def find_closest_color(rgb):
-    closest_color = min(colors, key=lambda c: color_distance(c, Color("", "", rgb[0], rgb[1], rgb[2])))
-    return closest_color
+from libraries.oled_print_tools import *
     
 def capture_image(filename="captured_image.jpg"):
 	try:
@@ -42,57 +14,100 @@ def capture_image(filename="captured_image.jpg"):
 	except subprocess.CalledProcessError:
 		print("Error: Failed to capture image.")
 		exit()
+        
 
-# Initialize the webcam
-#cap = cv2.VideoCapture(0)
+# Load color data from CSV
+def load_color_data(file_path):
+    df = pd.read_csv(file_path)
+    df = df[['Name', 'Red', 'Green', 'Blue']]
+    df['Red'] = df['Red'].str.rstrip('%').astype('float') / 100
+    df['Green'] = df['Green'].str.rstrip('%').astype('float') / 100
+    df['Blue'] = df['Blue'].str.rstrip('%').astype('float') / 100
+    return df
 
-# Check if the webcam is opened correctly
-#if not cap.isOpened():
-#    print("Error: Could not open webcam.")
-#    exit()
-
-# Define the crosshair size
-crosshair_size = 25
-half_size = crosshair_size // 2
-
-# Main loop
-while True:
-    capture_image("captured_image.jpg")
-    frame = cv2.imread("captured_image.jpg")
-    # Get the dimensions of the frame
-    height, width, _ = frame.shape
-
-    # Draw the crosshair in the center of the screen
-    center_x, center_y = width // 2, height // 2
-    cv2.rectangle(frame, (center_x - half_size, center_y - half_size), (center_x + half_size, center_y + half_size), (0, 255, 0), 2)
-
-    # Crop the region of interest (crosshair area)
-    crosshair_area = frame[center_y - half_size:center_y + half_size, center_x - half_size:center_x + half_size]
-
-    # Calculate the average RGB value of the crosshair area
-    avg_rgb = np.mean(crosshair_area, axis=(0, 1))  # Compute mean of the RGB channels
-
-    # Convert the average RGB value to integer
-    avg_rgb = tuple(map(int, avg_rgb))
-
-    # Find the closest color match
-    closest_color = find_closest_color(avg_rgb)
-
-    # Display the closest color name and RGB on the frame
-    color_info = f"{closest_color.Name} ({closest_color.Hex})"
-    cv2.putText(frame, color_info, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-
-    # Show the frame with the crosshair
-    cv2.imshow("Webcam Feed with Crosshair", frame)
+# Train the color prediction model using KNN
+def train_color_model(df):
+    X = df[['Red', 'Green', 'Blue']]  # Features: Red, Green, Blue
+    y = df['Name']  # Target: color name
+    label_encoder = LabelEncoder()
+    y_encoded = label_encoder.fit_transform(y)
     
-    print(color_info)
-    time.sleep(2)
+    knn = KNeighborsClassifier(n_neighbors=3)
+    knn.fit(X, y_encoded)
+    
+    return knn, label_encoder
 
-    # Check for key press to exit the loop (Enter key to exit)
-    key = cv2.waitKey(1) & 0xFF
-    if key == 13:  # Enter key
-        break
+# Function to calculate the average RGB value from a square region of interest
+def get_average_rgb(frame, center, size=25):
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    x, y = center
+    half_size = size // 2
+    roi = frame_rgb[y-half_size:y+half_size, x-half_size:x+half_size]
+    avg_color_per_row = np.average(roi, axis=0)
+    avg_color = np.average(avg_color_per_row, axis=0)
+    avg_color_normalized = avg_color / 255.0  # Normalize to range [0, 1]
+    return avg_color_normalized
 
-# Release the webcam and close the window
-cap.release()
-cv2.destroyAllWindows()
+# Function to predict the color based on RGB values using the KNN model
+def predict_color(knn_model, label_encoder, rgb_values, color_df, custom_thresholds):
+    rgb_values = np.array(rgb_values).reshape(1, -1)  # Reshape for prediction
+    predicted_label = knn_model.predict(rgb_values)  # Predict the color label
+    predicted_color = label_encoder.inverse_transform(predicted_label)  # Get the color name
+    
+    # Check if the predicted color is within custom threshold range
+    for i, row in color_df.iterrows():
+        color_name = row['Name']
+        ref_rgb = np.array([row['Red'], row['Green'], row['Blue']])
+        diff = np.linalg.norm(rgb_values - ref_rgb)
+        
+        # Compare against custom thresholds
+        if diff <= custom_thresholds.get(color_name, 0.1):
+            return color_name  # Return the closest color based on the threshold
+    
+    return predicted_color[0]  # Fallback to predicted color if no match within threshold
+    
+def print_color(timer):
+	
+	if timer != 0:
+		return print_to_screen("", timer)
+	
+	# Load color data from CSV
+	color_df = load_color_data('./libraries/sample-colors.csv')
+	
+	# Define custom color thresholds (for color "cusps")
+	custom_thresholds = {'Red': 0.05, 'Yellow': 0.05, 'Blue': 0.05}
+	
+	# Train the KNN model
+	knn_model, label_encoder = train_color_model(color_df)
+	
+	#FOR NOW CHANGE LATER no calibration yet
+	red_ref = color_df[color_df['Name'] == 'Red'][['Red', 'Green', 'Blue']].values[0]
+	yellow_ref = color_df[color_df['Name'] == 'Yellow'][['Red', 'Green', 'Blue']].values[0]
+	blue_ref = color_df[color_df['Name'] == 'Blue'][['Red', 'Green', 'Blue']].values[0]
+	
+	red_value = [6.37595316e-01, 2.35457516e-01, 1.36165577e-05]
+	yellow_value = [0.70857843, 0.84159858, 0.14859749]
+	blue_value = [0.,         0.23517157, 0.62379493]
+	
+	red_diff = red_value - red_ref
+	yellow_diff = yellow_value - yellow_ref
+	blue_diff = blue_value - blue_ref
+	
+	capture_image("captured_image.jpg")
+	frame = cv2.imread("captured_image.jpg")
+	
+	height, width, _ = frame.shape
+	center = (width // 2, height // 2)
+	
+	avg_rgb = get_average_rgb(frame, center, size=25)
+	
+	adjusted_rgb = [avg_rgb[0] + red_diff[0], avg_rgb[1] + yellow_diff[1], avg_rgb[2] + blue_diff[2]]
+	
+	predicted_color = predict_color(knn_model, label_encoder, adjusted_rgb, color_df, custom_thresholds)
+	
+	cv2.putText(frame, f'Color: {predicted_color}', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+	text_to_screen = predicted_color
+	return print_to_screen(text_to_screen, timer)
+        
+        
+#For calibration and full references, see model.py

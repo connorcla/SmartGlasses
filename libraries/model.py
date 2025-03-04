@@ -182,6 +182,7 @@ def main():
     
     # Compare and adjust the captured values based on CSV references
     print("Adjusting Color Values based on Calibration...")
+    print("Red value: ", red_value, " Yellow value: ", yellow_value, " Blue value: ", blue_value)
     
     # Calculate differences between captured and reference values
     red_diff = red_value - red_ref
