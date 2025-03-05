@@ -158,6 +158,10 @@ class OnTransition(State):
 
     def PrintOnTransition(self):
         clear_screen(0)
+        GPIO.output(power_led, GPIO.HIGH)
+        GPIO.output(red_led, GPIO.LOW)
+        GPIO.output(green_led, GPIO.LOW)
+        GPIO.output(blue_led, GPIO.HIGH)
         print("On transition")
 
 
@@ -166,6 +170,10 @@ class OffTransition(State):
         self.action_manager.AddAction(self.PrintOffTransition)
 
     def PrintOffTransition(self):
+        GPIO.output(power_led, GPIO.LOW)
+        GPIO.output(red_led, GPIO.LOW)
+        GPIO.output(green_led, GPIO.LOW)
+        GPIO.output(blue_led, GPIO.LOW)
         clear_screen(0)
         print("Off transition")
 
@@ -176,6 +184,10 @@ class CapColTransition(State):
 
     def PrintCapColTransition(self):
         clear_screen(0)
+        GPIO.output(power_led, GPIO.HIGH)
+        GPIO.output(red_led, GPIO.HIGH)
+        GPIO.output(green_led, GPIO.LOW)
+        GPIO.output(blue_led, GPIO.LOW)
         print("CapCol transition")
 
 
@@ -185,6 +197,10 @@ class ColASLTransition(State):
 
     def PrintColASLTransition(self):
         clear_screen(0)
+        GPIO.output(power_led, GPIO.HIGH)
+        GPIO.output(red_led, GPIO.LOW)
+        GPIO.output(green_led, GPIO.HIGH)
+        GPIO.output(blue_led, GPIO.LOW)
         print("ColASL transition")
 
 
@@ -194,6 +210,10 @@ class ASLCapTransition(State):
 
     def PrintASLCapTransition(self):
         clear_screen(0)
+        GPIO.output(power_led, GPIO.HIGH)
+        GPIO.output(red_led, GPIO.LOW)
+        GPIO.output(green_led, GPIO.LOW)
+        GPIO.output(blue_led, GPIO.HIGH)
         print("ASLCap transition")
 
 

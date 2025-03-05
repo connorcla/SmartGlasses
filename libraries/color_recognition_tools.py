@@ -85,9 +85,9 @@ def print_color(timer):
 	yellow_ref = color_df[color_df['Name'] == 'Yellow'][['Red', 'Green', 'Blue']].values[0]
 	blue_ref = color_df[color_df['Name'] == 'Blue'][['Red', 'Green', 'Blue']].values[0]
 	
-	red_value = [6.37595316e-01, 2.35457516e-01, 1.36165577e-05]
-	yellow_value = [0.70857843, 0.84159858, 0.14859749]
-	blue_value = [0.,         0.23517157, 0.62379493]
+	red_value = [0.76335103, 0.24066585, 0.00932734]
+	yellow_value = [0.71970997, 0.8018927,  0.1141476 ]
+	blue_value = [0.53118192, 0.89127179, 0.74334831]
 	
 	red_diff = red_value - red_ref
 	yellow_diff = yellow_value - yellow_ref
