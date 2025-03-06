@@ -48,7 +48,7 @@ def print_to_screen(text):
     
 def capture_image(filename="captured_image.jpg"):
 	try:
-		subprocess.run(["rpicam-still", "--immediate", "-o", filename], check=True)
+		subprocess.run(["rpicam-still", "-o", filename], check=True)
 		print("Image captured successfully")
 	except subprocess.CalledProcessError:
 		print("Error: Failed to capture image.")
