@@ -78,7 +78,7 @@ class NNRealistic2Transform(NNTransform):
 class NNASL(NNDefault):
   def InitExtension(self):
     self.AddTrainingAttributeGroup("Default", 0.2, 32, 5, 0.001, 29)
-    self.AddTrainingAttributeGroup("Speed", 0.2, 32, 100, 0.01, 29)
+    self.AddTrainingAttributeGroup("Speed", 0.2, 32, 10, 0.01, 29)
     self.AddTrainingAttributeGroup("Accurate", 0.20, 256, 500, 0.01, 29)
     self.AddTrainingAttributeGroup("Funny", 0.2, 32, 200, 0.01, 29)
     
@@ -99,14 +99,14 @@ if __name__ == "__main__":
   
   path_manager: TrainingDataPathManager = TrainingDataPathManager("path_manager")
 
-  tag_type: str                 = "Funny"
+  tag_type: str                 = "Speed"
   transform_type: str           = "Realistic2"
   model_type: str               = "Default"
-  model_num: str                = "40.0"
+  model_num: str                = "40.3"
   existing_model_num: str       = "0"
   input_path: str               = path_manager.GetLiteralDataPath("training_path")
   output_path: str              = path_manager.GetLiteralDataPath("model_path") + model_num + "/"
-  num_workers: int              = 4
+  num_workers: int              = 7
   is_model_loaded: bool         = False
   load_existing_model_path: str = path_manager.GetLiteralDataPath("model_path") + model_num + "/" + existing_model_num + ".pth"  
   documentation_path: str       = path_manager.GetLiteralDataPath("model_path") + model_num + "/doc/" + model_num + "." + existing_model_num + ".txt"

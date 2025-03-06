@@ -109,8 +109,8 @@ if __name__ == "__main__":
   tag_type: str                      = "Funny"
   transform_type: str                = "Default"
   model_type: str                    = "Default"
-  model_num: str                     = "35.0"
-  existing_model_num: str            = "11"
+  model_num: str                     = "40.3"
+  existing_model_num: str            = "9"
   enable_layer_output: bool          = False
   enable_classification_output: bool = True
   enable_probability_array: bool     = True

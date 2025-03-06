@@ -198,7 +198,7 @@ class NNDefault():
     
     # Manual Configuration
     nn_model.epoch = 0
-    nn_model.model = nn_model.model()
+    nn_model.model = nn_model.model
 
     nn_model.in_features = nn_model.model.fc.in_features
     nn_model.optimizer = torch.optim.Adam(nn_model.model.parameters(), lr=tag.learning_rate)
@@ -219,39 +219,39 @@ class NNDefault():
       nn_model.model = torch.load(model_pth_path, weights_only=False, map_location=self.nn_device)
       if (nn_model.model == None):
         print("Empty")
-      # model_pull = torch.load(model_pth_path, weights_only=False)
+      model_pull = torch.load(model_pth_path, weights_only=False)
 
       # nn_model.epoch = model_pull["epoch"]
-      # nn_model.model = torchvision.models.resnet50() # 2048, 1000 default
-      # nn_model.model.fc = torch.nn.Linear(2048, tag.num_classes, device=self.nn_device)
+      nn_model.model = torchvision.models.resnet50() # 2048, 1000 default
+      nn_model.model.fc = torch.nn.Linear(2048, tag.num_classes, device=self.nn_device)
       # print("--Debug--")
       # print(nn_model.model.fc)
       # print("------")
       # nn_model.model.load_state_dict(model_pull, strict=False)
       # print(f"Checksum: {torch.sum(torch.stack([p.double().abs().sum() for p in nn_model.model.parameters()]))}")
       
-      # preload_model_dict = nn_model.model.state_dict()
+      preload_model_dict = nn_model.model.state_dict()
       # fc_weights = model_pull["model_state_dict"]["fc.weight"]
       # fc_weights = fc_weights[:, tag.num_classes]
       # preload_model_dict.update(fc_weights)
-      # nn_model.model.load_state_dict(preload_model_dict)
-      # nn_model.model.load_state_dict(model_pull["model_state_dict"])
+      nn_model.model.load_state_dict(preload_model_dict)
+      nn_model.model.load_state_dict(model_pull["model_state_dict"])
       
-      # nn_model.model.to(self.nn_device)
-      # for name, layer in nn_model.model.named_children():
-      #   layer.to(self.nn_device)
+      nn_model.model.to(self.nn_device)
+      for name, layer in nn_model.model.named_children():
+        layer.to(self.nn_device)
       
       # for name, param in nn_model.model.named_parameters():
       #   param.data = param.data.to(self.nn_device)
       #   if param.grad != None:
       #     param.grad = param.gard.to(self.nn_device)
 
-      # nn_model.optimizer = torch.optim.Adam(nn_model.model.parameters(), tag.learning_rate)
-      # nn_model.optimizer.load_state_dict(model_pull["optimizer_state_dict"])
-      # for state in nn_model.optimizer.state.values():
-      #   for k, v in state.items():
-      #     if isinstance(v, torch.Tensor):
-      #       state[k] = v.to(self.nn_device)
+      nn_model.optimizer = torch.optim.Adam(nn_model.model.parameters(), tag.learning_rate)
+      nn_model.optimizer.load_state_dict(model_pull["optimizer_state_dict"])
+      for state in nn_model.optimizer.state.values():
+        for k, v in state.items():
+          if isinstance(v, torch.Tensor):
+            state[k] = v.to(self.nn_device)
       
 
 
