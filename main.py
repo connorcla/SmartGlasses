@@ -4,6 +4,7 @@ import time
 from libraries.state_machine_tools import *
 from libraries.speech_tools import *
 from libraries.oled_print_tools import *
+from libraries.color_recognition_tools import *
 
 class Glasses_State_Machine(StateMachine):
     def InitExtension(self):
@@ -43,8 +44,10 @@ class Glasses_State_Machine(StateMachine):
                 case "color":
                     if GPIO.input(power_btn) and not GPIO.input(mode_btn):
                         self.curr_state = self.GetState("off_transition")
+                        self.GetState("color").timer = 0
                     elif not GPIO.input(power_btn) and GPIO.input(mode_btn):
                         self.curr_state = self.GetState("col_asl")
+                        self.GetState("color").timer = 0
                     else:
                         self.curr_state = self.GetState("color")
                 case "asl":
@@ -123,6 +126,8 @@ class Caption(State):
 class Color(State):
     def InitExtension(self):
         self.action_manager.AddAction(self.ColorLoop)
+        
+        self.timer = 0
 
     def ColorLoop(self):
         GPIO.output(power_led, GPIO.HIGH)
@@ -131,6 +136,7 @@ class Color(State):
         GPIO.output(blue_led, GPIO.LOW)
 
         # Camera Loop ToDo PUT IN
+        self.timer = print_color(self.timer)
 
 
 class ASL(State):
@@ -152,6 +158,10 @@ class OnTransition(State):
 
     def PrintOnTransition(self):
         clear_screen(0)
+        GPIO.output(power_led, GPIO.HIGH)
+        GPIO.output(red_led, GPIO.LOW)
+        GPIO.output(green_led, GPIO.LOW)
+        GPIO.output(blue_led, GPIO.HIGH)
         print("On transition")
 
 
@@ -160,6 +170,10 @@ class OffTransition(State):
         self.action_manager.AddAction(self.PrintOffTransition)
 
     def PrintOffTransition(self):
+        GPIO.output(power_led, GPIO.LOW)
+        GPIO.output(red_led, GPIO.LOW)
+        GPIO.output(green_led, GPIO.LOW)
+        GPIO.output(blue_led, GPIO.LOW)
         clear_screen(0)
         print("Off transition")
 
@@ -170,6 +184,10 @@ class CapColTransition(State):
 
     def PrintCapColTransition(self):
         clear_screen(0)
+        GPIO.output(power_led, GPIO.HIGH)
+        GPIO.output(red_led, GPIO.HIGH)
+        GPIO.output(green_led, GPIO.LOW)
+        GPIO.output(blue_led, GPIO.LOW)
         print("CapCol transition")
 
 
@@ -179,6 +197,10 @@ class ColASLTransition(State):
 
     def PrintColASLTransition(self):
         clear_screen(0)
+        GPIO.output(power_led, GPIO.HIGH)
+        GPIO.output(red_led, GPIO.LOW)
+        GPIO.output(green_led, GPIO.HIGH)
+        GPIO.output(blue_led, GPIO.LOW)
         print("ColASL transition")
 
 
@@ -188,6 +210,10 @@ class ASLCapTransition(State):
 
     def PrintASLCapTransition(self):
         clear_screen(0)
+        GPIO.output(power_led, GPIO.HIGH)
+        GPIO.output(red_led, GPIO.LOW)
+        GPIO.output(green_led, GPIO.LOW)
+        GPIO.output(blue_led, GPIO.HIGH)
         print("ASLCap transition")
 
 

@@ -48,7 +48,7 @@ def print_to_screen(text):
     
 def capture_image(filename="captured_image.jpg"):
 	try:
-		subprocess.run(["rpicam-still", "--immediate", "-o", filename], check=True)
+		subprocess.run(["rpicam-still", "-o", filename], check=True)
 		print("Image captured successfully")
 	except subprocess.CalledProcessError:
 		print("Error: Failed to capture image.")
@@ -182,6 +182,7 @@ def main():
     
     # Compare and adjust the captured values based on CSV references
     print("Adjusting Color Values based on Calibration...")
+    print("Red value: ", red_value, " Yellow value: ", yellow_value, " Blue value: ", blue_value)
     
     # Calculate differences between captured and reference values
     red_diff = red_value - red_ref

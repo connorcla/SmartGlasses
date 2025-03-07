@@ -48,10 +48,13 @@ def recognize_speech(timer):
                 sys.stdout.write(". ")
                 sys.stdout.flush()
                 
-                if text == "Time":
+                if text == "What time is it":
                     now = datetime.datetime.now()
                     now_str = now.strftime("%H:%M %m-%d-%Y")
                     return print_to_screen("Current time:\n\n" + now_str, timer)
+                    
+                if text == "Pusheen":
+                    return print_to_screen("Pusheen: meow!!", timer)
 
                 #Use OLED library
                 return print_to_screen(text, timer)
