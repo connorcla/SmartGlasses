@@ -8,11 +8,10 @@ source opencv-env/bin/activate
 
 and then:
 
-pip install opencv-python numpy pandas scikit-learn pillow luma.oled luma.core
+pip install opencv-python numpy pandas scikit-learn pillow luma.oled RPi.GPIO spidev
 
-sudo apt update
+sudo apt-get install python3-spidev python3-pip && pip install opencv-python numpy pandas scikit-learn pillow luma.oled RPi.GPIO spidev
 
-sudo apt install python3-dev python3-pip libfreetype6-dev libjpeg-dev libopenjp2-7 libtiff5 -y
 
 if using on venv:
 
