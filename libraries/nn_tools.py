@@ -88,7 +88,7 @@ class NNHandDetector():
   def InitExtension(self):
     pass
   
-  def RunHandDetector(self, image_path):
+  def RunHandDetector(self, image_path: str):
     mp_drawing = mp.solutions.drawing_utils
     mp_hands = mp.solutions.hands    
     with mp_hands.Hands(static_image_mode=True, max_num_hands=1, min_detection_confidence=0.8, min_tracking_confidence=0.5) as hands:
