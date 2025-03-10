@@ -17,7 +17,7 @@ class TrainingDataPathManager(DataPathManager):
 class NNDefaultTransform(NNTransform):
   def GetTransformation(self):
     transform = transforms.Compose([
-      transforms.Resize(128),
+      # transforms.Resize(128),
       transforms.ToTensor()
     ])
     return transform
@@ -100,7 +100,7 @@ if __name__ == "__main__":
   path_manager: TrainingDataPathManager = TrainingDataPathManager("path_manager")
 
   tag_type: str                 = "Speed"
-  transform_type: str           = "Realistic2"
+  transform_type: str           = "Default"
   model_type: str               = "Default"
   model_num: str                = "40.3"
   existing_model_num: str       = "0"

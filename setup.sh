@@ -36,6 +36,7 @@ pip install kagglehub
 
   # CPU ONLY
     pip3 install torch torchvision torchaudio
+    pip install mediapipe
 
   # Mobile Pytorch (Don't know if necessary, also just guessed library)
   # pip3 install tqdm 
