@@ -106,7 +106,7 @@ if __name__ == "__main__":
   existing_model_num: str       = "0"
   input_path: str               = path_manager.GetLiteralDataPath("training_path")
   output_path: str              = path_manager.GetLiteralDataPath("model_path") + model_num + "/"
-  num_workers: int              = 7
+  num_workers: int              = 16
   is_model_loaded: bool         = False
   load_existing_model_path: str = path_manager.GetLiteralDataPath("model_path") + model_num + "/" + existing_model_num + ".pth"  
   documentation_path: str       = path_manager.GetLiteralDataPath("model_path") + model_num + "/doc/" + model_num + "." + existing_model_num + ".txt"

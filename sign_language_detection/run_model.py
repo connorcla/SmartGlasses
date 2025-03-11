@@ -110,7 +110,7 @@ if __name__ == "__main__":
   transform_type: str                = "Default"
   model_type: str                    = "Default"
   model_num: str                     = "40.3"
-  existing_model_num: str            = "9"
+  existing_model_num: str            = "4"
   enable_layer_output: bool          = False
   enable_classification_output: bool = True
   enable_probability_array: bool     = True
