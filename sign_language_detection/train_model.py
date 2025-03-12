@@ -99,10 +99,10 @@ if __name__ == "__main__":
   
   path_manager: TrainingDataPathManager = TrainingDataPathManager("path_manager")
 
-  tag_type: str                 = "Speed"
+  tag_type: str                 = "Funny"
   transform_type: str           = "Default"
   model_type: str               = "Default"
-  model_num: str                = "40.3"
+  model_num: str                = "40.6"
   existing_model_num: str       = "0"
   input_path: str               = path_manager.GetLiteralDataPath("training_path")
   output_path: str              = path_manager.GetLiteralDataPath("model_path") + model_num + "/"

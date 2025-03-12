@@ -22,7 +22,7 @@ class RunModelPathManager(DataPathManager):
     
     # Training, Testing Paths
     self.AddDataPath("training_path", "./datasets/asl_alphabet/asl_alphabet_train/")
-    self.AddDataPath("test_path", "./datasets/asl_alphabet/asl_alphabet_test/")
+    self.AddDataPath("test_path", "./datasets/asl_alphabet/")
 
     # Models Path
     self.AddDataPath("models_path", "./models/")
@@ -37,22 +37,40 @@ class ASLTestDataset(torch.utils.data.Dataset):
   def __init__(self, root_path, transforms=None):
     super().__init__()
     
+    self.hand_detector: NNHandDetector = NNHandDetector("Default")
     self.transforms = transforms
-    self.imgs = sorted(list(Path(root_path).glob('*.jpg')))
-      
+    self.imgs = []
+    self.labels = []
+    self.label_encoder = LabelEncoder()
+    self.known_labels = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','nothing','O','P','Q','R','S','space','T','U','V','W','X','Y','Z']
+    
+    # Traverse subdirectories and get images
+    for label_dir in Path(root_path).iterdir():
+
+        if label_dir.is_dir():
+            for img_path in label_dir.glob('*.jpg'):
+                self.imgs.append(img_path)
+                self.labels.append(label_dir.name)  # Using subdirectory name as label 
+        else:
+            print("[non_label_dir]: ", label_dir)
+    self.label_encoder.fit(self.known_labels)
+                
   def __len__(self):
     return len(self.imgs)
   
   def __getitem__(self, idx):
     img_path = self.imgs[idx]
-    img = Image.open(img_path).convert('RGB')
+    img = Image.fromarray(self.hand_detector.RunHandDetector(img_path))
     
     label = img_path.parts[-1].split('_')[0]
+    print("[img_path.parts]: ", img_path.parts)
+    print("[label]: ", label)
+    label = self.label_encoder.transform([label])[0]
+    label = torch.tensor(label, dtype=torch.long)
     if self.transforms:
       img = self.transforms(img)
     
     return img, label
-
 
 class NNDefaultTransform(NNTransform):
   def GetTransformation(self):
@@ -109,8 +127,8 @@ if __name__ == "__main__":
   tag_type: str                      = "Funny"
   transform_type: str                = "Default"
   model_type: str                    = "Default"
-  model_num: str                     = "40.3"
-  existing_model_num: str            = "4"
+  model_num: str                     = "40.5"
+  existing_model_num: str            = "15"
   enable_layer_output: bool          = False
   enable_classification_output: bool = True
   enable_probability_array: bool     = True

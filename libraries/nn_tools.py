@@ -17,6 +17,7 @@ import random
 
 import mediapipe as mp
 import cv2
+from sklearn.preprocessing import LabelEncoder
 
 class DataPath():
   def __init__(self, path_name: str, literal_path: str):
@@ -64,7 +65,46 @@ class DataPathManager():
   
   
     
+class ASLTestDataset(torch.utils.data.Dataset):
+  def __init__(self, root_path, transforms=None):
+    super().__init__()
     
+    self.hand_detector: NNHandDetector = NNHandDetector("Default")
+    self.transforms = transforms
+    self.imgs = []
+    self.labels = []
+    self.label_encoder = LabelEncoder()
+    
+    # Traverse subdirectories and get images
+    for label_dir in Path(root_path).iterdir():
+
+        if label_dir.is_dir():
+            print("[label_dir]: ", label_dir)
+            # input()
+            for img_path in label_dir.glob('*.jpg'):
+                self.imgs.append(img_path)
+                self.labels.append(label_dir.name)  # Using subdirectory name as label 
+        else:
+            print("[non_label_dir]: ", label_dir)
+    self.label_encoder.fit(self.labels)
+                
+  def __len__(self):
+    return len(self.imgs)
+  
+  def __getitem__(self, idx):
+    img_path = self.imgs[idx]
+    # img = Image.open(img_path).convert('RGB')
+    img = self.hand_detector.RunHandDetector(img_path)
+    
+    label = img_path.parts[-2].split('_')[0]
+    print("[img_path.parts]: ", img_path.parts)
+    print("[label]: ", label)
+    label = self.label_encoder.transform([label])[0]
+    label = torch.tensor(label, dtype=torch.long)
+    if self.transforms:
+      img = self.transforms(img)
+    
+    return img, label
     
 class TrainingAttributeGroup():
   # VERY CONSTRUCTOR DEPENDENT
@@ -91,16 +131,25 @@ class NNHandDetector():
   def RunHandDetector(self, image_path: str):
     mp_drawing = mp.solutions.drawing_utils
     mp_hands = mp.solutions.hands    
-    with mp_hands.Hands(static_image_mode=True, max_num_hands=1, min_detection_confidence=0.8, min_tracking_confidence=0.5) as hands:
+
+
+    with mp_hands.Hands(static_image_mode=True, max_num_hands=1, min_detection_confidence=0, min_tracking_confidence=0.5) as hands:
+
       img = cv2.imread(image_path)
       img = cv2.flip(img, 1)
-      results = hands.process(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-
       img_width, img_height, _ = img.shape
+      print("[img.shape]: ", img.shape)
+
       x_min = img_width
       y_min = img_height
       x_max= 0
       y_max = 0
+
+      results = hands.process(cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+      
+      # cv2.imshow("Setup", img)
+      # cv2.waitKey(0)
+      # cv2.destroyAllWindows()
 
       marked_img = img.copy()
       if results.multi_hand_landmarks:
@@ -109,9 +158,9 @@ class NNHandDetector():
           mp_drawing.draw_landmarks(marked_img, hand_landmarks,
                                     mp_hands.HAND_CONNECTIONS,
                                     landmark_drawing_spec=mp.solutions.drawing_utils.DrawingSpec(
-                                      color=(0, 255, 0), thickness=1, circle_radius=1),
+                                      color=(255, 0, 0), thickness=1, circle_radius=1),
                                     connection_drawing_spec=mp.solutions.drawing_utils.DrawingSpec(
-                                      color=(0, 0, 255), thickness=1, circle_radius=1)
+                                      color=(125, 255, 125), thickness=1, circle_radius=1)
                                     )
           
           # update coords for cropping bounding box
@@ -120,8 +169,14 @@ class NNHandDetector():
             curr_y = int(landmark.y * img_height)
             x_min, y_min = min(curr_x, x_min), min(curr_y, y_min)
             x_max, y_max = max(curr_x, x_max), max(curr_y, y_max)
+      else:
+        print("[Markings]: No landmarks found")
+        return cv2.resize(img, (128, 128))
 
-      
+      # cv2.imshow("Marked", marked_img)
+      # cv2.waitKey(0)
+      # cv2.destroyAllWindows()
+
       # crop image with square ratio
       padding = 25
       x_length = x_max - x_min
@@ -136,6 +191,9 @@ class NNHandDetector():
 
       cropped_img = marked_img[x_min:x_max, y_min:y_max]
       cropped_img = cv2.resize(cropped_img, (128, 128))
+      # cv2.imshow("Cropped", img)
+      # cv2.waitKey(0)
+      # cv2.destroyAllWindows()
 
       return cropped_img
     
@@ -184,9 +242,9 @@ class NNHandDetector():
               mp_drawing.draw_landmarks(marked_img, hand_landmarks,
                                         mp_hands.HAND_CONNECTIONS,
                                         landmark_drawing_spec=mp.solutions.drawing_utils.DrawingSpec(
-                                          color=(0, 255, 0), thickness=1, circle_radius=1),
+                                          color=(255, 0, 0), thickness=1, circle_radius=1),
                                         connection_drawing_spec=mp.solutions.drawing_utils.DrawingSpec(
-                                          color=(0, 0, 255), thickness=1, circle_radius=1)
+                                          color=(125, 255, 125), thickness=1, circle_radius=1)
                                         )
               
               # update coords for cropping bounding box
@@ -539,7 +597,7 @@ class NNDefault():
     
 
     # Import dataset and prepare
-    train_dataset = datasets.ImageFolder(input_path, transform=nn_transformation)
+    train_dataset = ASLTestDataset(input_path, transforms=nn_transformation)
     train_dataset_size = len(train_dataset)
     indices = torch.randperm(train_dataset_size)
     split = int(train_dataset_size * tag.test_size)
@@ -572,13 +630,16 @@ class NNDefault():
       #   print(f"Model device: ", i.device)
       
       # print(f"Model: {nn_model.model.device} ")
-      hand_detector: NNHandDetector = NNHandDetector("Default") 
+      # hand_detector: NNHandDetector = NNHandDetector("Default") 
       nn_model.model.train()
       for images, labels in train_dataloader:
-        images = hand_detector.RunHandDetectorImageSet(images)
+        # images = hand_detector.RunHandDetectorImageSet(images)
         # print(len(images))
         images = torch.tensor(images)
         images = images.to(self.nn_device)
+        print()
+        print("[labels?tuple]: ", labels)
+        print()
         labels = labels.to(self.nn_device)
         # print(f"Images device: {images.device} ")
         # print(f"Labels device: {labels.device} ")
@@ -632,7 +693,8 @@ class NNDefault():
     
     nn_transform = self.GetNNTransformation(transform_name)
 
-    input_image = Image.open(image_path)
+    hand_detector: NNHandDetector = NNHandDetector("Default") 
+    input_image = Image.fromarray(hand_detector.RunHandDetector(image_path))
     image_tensor = nn_transform(input_image)[:3].unsqueeze(0)
     
     outputs = ""
@@ -654,11 +716,11 @@ class NNDefault():
     
     nn_transform = self.GetNNTransformation(transform_name)
 
-    input_image = Image.open(image_path)
 
     hand_detector: NNHandDetector = NNHandDetector("Default") 
-    hand_detector.RunHandDetector(image_tensor)
-
+    
+    input_image = Image.fromarray(hand_detector.RunHandDetector(image_path))
+    # print("[input_image.shape]: ", input_image.shape)
     image_tensor = nn_transform(input_image)[:3].unsqueeze(0)
     
 
