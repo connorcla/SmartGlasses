@@ -83,6 +83,14 @@ class NNRealistic2Transform(NNTransform):
       transforms.ToTensor()
     ])
     return transform 
+class NNSquareCropTransform(NNTransform):
+  def GetTransformation(self):
+    transform = transforms.Compose([
+      transforms.CenterCrop(1080),
+      transforms.Resize(128),
+      transforms.ToTensor()
+    ])
+    return transform 
    
 class NNASL(NNDefault):
   def InitExtension(self):
@@ -91,6 +99,7 @@ class NNASL(NNDefault):
     self.AddNNTransformation(NNDefaultTransform("Default"))
     self.AddNNTransformation(NNVariableTransform("Variable"))
     self.AddNNTransformation(NNRealistic2Transform("Realistic2"))
+    self.AddNNTransformation(NNSquareCropTransform("Square"))
 
     self.AddNNModel(NNModel("Default", False))
     self.AddNNModel(NNModel("Mobile", True))
@@ -107,9 +116,9 @@ if __name__ == "__main__":
   path_manager: RunModelPathManager = RunModelPathManager("run_model_path_manager")
 
   tag_type: str                      = "Funny"
-  transform_type: str                = "Default"
+  transform_type: str                = "Square"
   model_type: str                    = "Default"
-  model_num: str                     = "35.0"
+  model_num: str                     = "1.0"
   existing_model_num: str            = "11"
   enable_layer_output: bool          = False
   enable_classification_output: bool = True
