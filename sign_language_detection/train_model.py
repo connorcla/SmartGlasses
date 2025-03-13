@@ -74,6 +74,20 @@ class NNRealistic2Transform(NNTransform):
       transforms.ToTensor()
     ])
     return transform 
+  
+class NNRealistic3Transform(NNTransform):
+  def GetTransformation(self):
+    transform = transforms.Compose([
+      transforms.RandomRotation(degrees=(-10,10)),
+      transforms.ColorJitter(brightness=0.2, 
+                            contrast=0.2, 
+                            saturation=0.1, 
+                            hue=0.1),
+      transforms.RandomPerspective(distortion_scale=0.1, p=0.3),
+      transforms.Resize(128),
+      transforms.ToTensor()
+    ])
+    return transform
    
 class NNASL(NNDefault):
   def InitExtension(self):
@@ -86,6 +100,7 @@ class NNASL(NNDefault):
     self.AddNNTransformation(NNVariableTransform("Variable"))
     self.AddNNTransformation(NNRealisticTransform("Realistic"))
     self.AddNNTransformation(NNRealistic2Transform("Realistic2"))
+    self.AddNNTransformation(NNRealistic3Transform("Realistic3"))
 
     self.AddNNModel(NNModel("Default", False))
     self.AddNNModel(NNModel("Mobile", True))
@@ -100,13 +115,13 @@ if __name__ == "__main__":
   path_manager: TrainingDataPathManager = TrainingDataPathManager("path_manager")
 
   tag_type: str                 = "Funny"
-  transform_type: str           = "Realistic2"
+  transform_type: str           = "Realistic3"
   model_type: str               = "Default"
-  model_num: str                = "40.0"
+  model_num: str                = "50.2"
   existing_model_num: str       = "0"
   input_path: str               = path_manager.GetLiteralDataPath("training_path")
   output_path: str              = path_manager.GetLiteralDataPath("model_path") + model_num + "/"
-  num_workers: int              = 4
+  num_workers: int              = 16
   is_model_loaded: bool         = False
   load_existing_model_path: str = path_manager.GetLiteralDataPath("model_path") + model_num + "/" + existing_model_num + ".pth"  
   documentation_path: str       = path_manager.GetLiteralDataPath("model_path") + model_num + "/doc/" + model_num + "." + existing_model_num + ".txt"

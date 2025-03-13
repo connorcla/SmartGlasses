@@ -83,6 +83,27 @@ class NNRealistic2Transform(NNTransform):
       transforms.ToTensor()
     ])
     return transform 
+class NNRealistic3Transform(NNTransform):
+  def GetTransformation(self):
+    transform = transforms.Compose([
+      transforms.RandomRotation(degrees=(-10,10)),
+      transforms.ColorJitter(brightness=0.2, 
+                            contrast=0.2, 
+                            saturation=0.1, 
+                            hue=0.1),
+      transforms.RandomPerspective(distortion_scale=0.1, p=0.3),
+      transforms.Resize(128),
+      transforms.ToTensor()
+    ])
+    return transform
+class NNSquareCropTransform(NNTransform):
+  def GetTransformation(self):
+    transform = transforms.Compose([
+      transforms.CenterCrop(1080),
+      transforms.Resize(128),
+      transforms.ToTensor()
+    ])
+    return transform 
    
 class NNASL(NNDefault):
   def InitExtension(self):
@@ -91,6 +112,8 @@ class NNASL(NNDefault):
     self.AddNNTransformation(NNDefaultTransform("Default"))
     self.AddNNTransformation(NNVariableTransform("Variable"))
     self.AddNNTransformation(NNRealistic2Transform("Realistic2"))
+    self.AddNNTransformation(NNRealistic3Transform("Realistic3"))
+    self.AddNNTransformation(NNSquareCropTransform("Square"))
 
     self.AddNNModel(NNModel("Default", False))
     self.AddNNModel(NNModel("Mobile", True))
@@ -109,8 +132,8 @@ if __name__ == "__main__":
   tag_type: str                      = "Funny"
   transform_type: str                = "Default"
   model_type: str                    = "Default"
-  model_num: str                     = "35.0"
-  existing_model_num: str            = "11"
+  model_num: str                     = "50.2"
+  existing_model_num: str            = "23"
   enable_layer_output: bool          = False
   enable_classification_output: bool = True
   enable_probability_array: bool     = True
