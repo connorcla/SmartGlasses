@@ -88,6 +88,19 @@ class NNRealistic3Transform(NNTransform):
       transforms.ToTensor()
     ])
     return transform
+class NNRealistic3TransformHigh(NNTransform):
+  def GetTransformation(self):
+    transform = transforms.Compose([
+      transforms.RandomRotation(degrees=(-10,10)),
+      transforms.ColorJitter(brightness=0.2, 
+                            contrast=0.2, 
+                            saturation=0.1, 
+                            hue=0.1),
+      transforms.RandomPerspective(distortion_scale=0.1, p=0.3),
+      transforms.Resize(224),
+      transforms.ToTensor()
+    ])
+    return transform
    
 class NNASL(NNDefault):
   def InitExtension(self):
@@ -101,6 +114,7 @@ class NNASL(NNDefault):
     self.AddNNTransformation(NNRealisticTransform("Realistic"))
     self.AddNNTransformation(NNRealistic2Transform("Realistic2"))
     self.AddNNTransformation(NNRealistic3Transform("Realistic3"))
+    self.AddNNTransformation(NNRealistic3TransformHigh("Realistic3High"))
 
     self.AddNNModel(NNModel("Default", False))
     self.AddNNModel(NNModel("Mobile", True))
@@ -115,9 +129,9 @@ if __name__ == "__main__":
   path_manager: TrainingDataPathManager = TrainingDataPathManager("path_manager")
 
   tag_type: str                 = "Funny"
-  transform_type: str           = "Realistic3"
+  transform_type: str           = "Realistic3High"
   model_type: str               = "Default"
-  model_num: str                = "50.2"
+  model_num: str                = "50.3"
   existing_model_num: str       = "0"
   input_path: str               = path_manager.GetLiteralDataPath("training_path")
   output_path: str              = path_manager.GetLiteralDataPath("model_path") + model_num + "/"

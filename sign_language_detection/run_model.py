@@ -29,6 +29,8 @@ class RunModelPathManager(DataPathManager):
     
     # Singular Image Paths
     self.AddDataPath("G", "./input/G_test.jpg")
+    self.AddDataPath("L", "./input/L_test.jpg")
+    self.AddDataPath("U", "./input/U_test.jpg")
     # self.AddDataPath("i", "./hi_there_asl/i.JPG")
     # self.AddDataPath("e", "./hi_there_asl/e.JPG")
 
@@ -58,6 +60,13 @@ class NNDefaultTransform(NNTransform):
   def GetTransformation(self):
     transform = transforms.Compose([
       transforms.Resize(128),
+      transforms.ToTensor()
+    ])
+    return transform
+class NNDefaultTransformHigh(NNTransform):
+  def GetTransformation(self):
+    transform = transforms.Compose([
+      transforms.Resize(224),
       transforms.ToTensor()
     ])
     return transform
@@ -96,11 +105,32 @@ class NNRealistic3Transform(NNTransform):
       transforms.ToTensor()
     ])
     return transform
+class NNRealistic3TransformHigh(NNTransform):
+  def GetTransformation(self):
+    transform = transforms.Compose([
+      transforms.RandomRotation(degrees=(-10,10)),
+      transforms.ColorJitter(brightness=0.2, 
+                            contrast=0.2, 
+                            saturation=0.1, 
+                            hue=0.1),
+      transforms.RandomPerspective(distortion_scale=0.1, p=0.3),
+      transforms.Resize(224),
+      transforms.ToTensor()
+    ])
+    return transform
 class NNSquareCropTransform(NNTransform):
   def GetTransformation(self):
     transform = transforms.Compose([
       transforms.CenterCrop(1080),
       transforms.Resize(128),
+      transforms.ToTensor()
+    ])
+    return transform 
+class NNSquareCropTransformHigh(NNTransform):
+  def GetTransformation(self):
+    transform = transforms.Compose([
+      transforms.CenterCrop(1080),
+      transforms.Resize(224),
       transforms.ToTensor()
     ])
     return transform 
@@ -110,10 +140,13 @@ class NNASL(NNDefault):
     self.AddTrainingAttributeGroup("Funny", 0.2, 32, 100, 0.01, 29) 
 
     self.AddNNTransformation(NNDefaultTransform("Default"))
+    self.AddNNTransformation(NNDefaultTransformHigh("DefaultHigh"))
     self.AddNNTransformation(NNVariableTransform("Variable"))
     self.AddNNTransformation(NNRealistic2Transform("Realistic2"))
     self.AddNNTransformation(NNRealistic3Transform("Realistic3"))
+    self.AddNNTransformation(NNRealistic3TransformHigh("Realistic3High"))
     self.AddNNTransformation(NNSquareCropTransform("Square"))
+    self.AddNNTransformation(NNSquareCropTransformHigh("SquareHigh"))
 
     self.AddNNModel(NNModel("Default", False))
     self.AddNNModel(NNModel("Mobile", True))
@@ -130,15 +163,15 @@ if __name__ == "__main__":
   path_manager: RunModelPathManager = RunModelPathManager("run_model_path_manager")
 
   tag_type: str                      = "Funny"
-  transform_type: str                = "Default"
+  transform_type: str                = "Realistic3High"
   model_type: str                    = "Default"
-  model_num: str                     = "50.2"
-  existing_model_num: str            = "23"
+  model_num: str                     = "50.3"
+  existing_model_num: str            = "55"
   enable_layer_output: bool          = False
   enable_classification_output: bool = True
   enable_probability_array: bool     = True
   model_path: str = path_manager.GetLiteralDataPath("models_path") + model_num + "/" + existing_model_num + ".pth"
-  input_path: str = path_manager.GetLiteralDataPath("G")                                                       
+  input_path: str = path_manager.GetLiteralDataPath("U")                                                       
 
 
   # torch.cuda.manual_seed(1)
