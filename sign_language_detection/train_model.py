@@ -131,7 +131,7 @@ if __name__ == "__main__":
   tag_type: str                 = "Funny"
   transform_type: str           = "Realistic3High"
   model_type: str               = "Default"
-  model_num: str                = "50.3"
+  model_num: str                = "50.4"
   existing_model_num: str       = "0"
   input_path: str               = path_manager.GetLiteralDataPath("training_path")
   output_path: str              = path_manager.GetLiteralDataPath("model_path") + model_num + "/"

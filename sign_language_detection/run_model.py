@@ -163,10 +163,10 @@ if __name__ == "__main__":
   path_manager: RunModelPathManager = RunModelPathManager("run_model_path_manager")
 
   tag_type: str                      = "Funny"
-  transform_type: str                = "Realistic3High"
+  transform_type: str                = "SquareHigh"
   model_type: str                    = "Default"
-  model_num: str                     = "50.3"
-  existing_model_num: str            = "55"
+  model_num: str                     = "50.4"
+  existing_model_num: str            = "51"
   enable_layer_output: bool          = False
   enable_classification_output: bool = True
   enable_probability_array: bool     = True
@@ -181,12 +181,12 @@ if __name__ == "__main__":
   
   # ----- Matplot Lib ------
   # Comment out if you do not want to test model on test files
-  asl_nn_model.RunTestMatching(model_type, 
-                               transform_type,
-                               ASLTestDataset, 
-                               path_manager.GetLiteralDataPath("training_path"), 
-                               path_manager.GetLiteralDataPath("test_path"), 
-                              )
+  # asl_nn_model.RunTestMatching(model_type, 
+  #                              transform_type,
+  #                              ASLTestDataset, 
+  #                              path_manager.GetLiteralDataPath("training_path"), 
+  #                              path_manager.GetLiteralDataPath("test_path"), 
+  #                             )
   # ------------------------
 
 
