@@ -14,16 +14,27 @@ class NNDefaultTransform(NNTransform):
       transforms.ToTensor()
     ])
     return transform
+class NNSquareCropTransform(NNTransform):
+  def GetTransformation(self):
+    transform = transforms.Compose([
+      transforms.CenterCrop(1080),
+      transforms.Resize(128),
+      transforms.ToTensor()
+    ])
+    return transform 
 
 class NNASL(NNDefault):
   def InitExtension(self):
     self.AddTrainingAttributeGroup("Default", 0.2, 32, 100, 0.01, 29) 
 
     self.AddNNTransformation(NNDefaultTransform("Default"))
+    self.AddNNTransformation(NNSquareCropTransform("Square"))
 
     self.AddNNModel(NNModel("Default", False))
     self.AddNNModel(NNModel("Mobile", True))
+    
 
+  
 def ConvertLabelToChar(label: int):
   return ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',' ',' ',' '][label]
 

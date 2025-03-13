@@ -198,7 +198,7 @@ class NNDefault():
     
     # Manual Configuration
     nn_model.epoch = 0
-    nn_model.model = nn_model.model()
+    nn_model.model = torchvision.models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V2)
 
     nn_model.in_features = nn_model.model.fc.in_features
     nn_model.optimizer = torch.optim.Adam(nn_model.model.parameters(), lr=tag.learning_rate)
@@ -264,7 +264,7 @@ class NNDefault():
       nn_model.model.classifier[1] = torch.nn.Linear(in_features, classes)
       nn_model.model.load_state_dict(torch.load(model_pth_path, map_location=torch.device("cpu")))
     
-    nn_model.model.to(self.nn_device)
+    # nn_model.model.to(self.nn_device)
   
   
   # Train Functions
@@ -446,12 +446,12 @@ class NNDefault():
       doc_file.write(f"\ncompleted epoch {epoch} with running loss {running_loss}...")
       doc_file.flush()
       
-      model_data = {
-        "epoch" : epoch + 1,
-        "model_state_dict" : nn_model.model.state_dict(),
-        "optimizer_state_dict" : nn_model.optimizer.state_dict(),
-      }
-      torch.save(model_data, f'{output_path}{epoch}.pth')
+      # model_data = {
+      #   "epoch" : epoch + 1,
+      #   "model_state_dict" : nn_model.model.state_dict(),
+      #   "optimizer_state_dict" : nn_model.optimizer.state_dict(),
+      # }
+      torch.save(nn_model.model, f'{output_path}{epoch}.pth')
    
 
   # Helper   
