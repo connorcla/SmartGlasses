@@ -216,9 +216,9 @@ if __name__ == "__main__":
     path_manager: MainPathManager = MainPathManager("main_model_path_manager")
 
     tag_type: str                      = "Default"
-    transform_type: str                = "Square"
+    transform_type: str                = "SquareHigh"
     model_type: str                    = "Default"
-    model_num: str                     = "27"
+    model_num: str                     = "50.3.40"
     model_path: str = path_manager.GetLiteralDataPath("model_path") + model_num + ".pth"
     input_path: str = path_manager.GetLiteralDataPath("image_path")                       
 

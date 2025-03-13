@@ -14,11 +14,26 @@ class NNDefaultTransform(NNTransform):
       transforms.ToTensor()
     ])
     return transform
+class NNDefaultTransformHigh(NNTransform):
+  def GetTransformation(self):
+    transform = transforms.Compose([
+      transforms.Resize(224),
+      transforms.ToTensor()
+    ])
+    return transform
 class NNSquareCropTransform(NNTransform):
   def GetTransformation(self):
     transform = transforms.Compose([
       transforms.CenterCrop(1080),
       transforms.Resize(128),
+      transforms.ToTensor()
+    ])
+    return transform 
+class NNSquareCropTransformHigh(NNTransform):
+  def GetTransformation(self):
+    transform = transforms.Compose([
+      transforms.CenterCrop(1080),
+      transforms.Resize(224),
       transforms.ToTensor()
     ])
     return transform 
@@ -28,7 +43,9 @@ class NNASL(NNDefault):
     self.AddTrainingAttributeGroup("Default", 0.2, 32, 100, 0.01, 29) 
 
     self.AddNNTransformation(NNDefaultTransform("Default"))
+    self.AddNNTransformation(NNDefaultTransformHigh("DefaultHigh"))
     self.AddNNTransformation(NNSquareCropTransform("Square"))
+    self.AddNNTransformation(NNSquareCropTransformHigh("SquareHigh"))
 
     self.AddNNModel(NNModel("Default", False))
     self.AddNNModel(NNModel("Mobile", True))
