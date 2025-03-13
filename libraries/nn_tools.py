@@ -390,7 +390,9 @@ class NNDefault():
     
 
     # Import dataset and prepare
-    train_dataset = datasets.ImageFolder(input_path, transform=nn_transformation)
+    train_dataset = datasets.ImageFolder(root=input_path, transform=nn_transformation)
+    print("len(train_dataset): ", len(train_dataset))
+    print("dataset classes: ", train_dataset.classes)
     train_dataset_size = len(train_dataset)
     indices = torch.randperm(train_dataset_size)
     split = int(train_dataset_size * tag.test_size)
